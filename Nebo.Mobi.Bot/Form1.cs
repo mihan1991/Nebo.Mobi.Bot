@@ -16,7 +16,7 @@ namespace Nebo.Mobi.Bot
     {
         private int lift_count;                                 //счетчик перевезенных в лифте
         private int buy_count;                                  //счетчик купленных товаров
-        private int coins_count;                                //счетчик полученного бабла (чаевые, выручка...)
+        private int coins_count;                                //счетчик собранных выручек (точнее этажей)
         //private int bucks_count;                                //счетчик полученных баксов (пока только чаевые)
         private int merch_count;                                //счетчик выложенных товаров (точнее этажей)
 
@@ -35,7 +35,6 @@ namespace Nebo.Mobi.Bot
         private string HOME_LINK;                               //ссылка на домашнюю страницу
         private string COMMUTATION_STR;                         //строка для логов
         private int timeleft;                                   //секунд до начала нового прохода
-        //private int upd_synch;                                  //переменная для синхронизации
 
         private Thread Bot;                                     //переменная потока бота
 
@@ -74,9 +73,11 @@ namespace Nebo.Mobi.Bot
             LOGBox.Location = new Point(lLogin.Location.X, lLOG.Location.Y + lLOG.Size.Height + (int)(0.01 * this.Size.Height));
             LOGBox.Size = new Size(this.Size.Width - 3 * LOGBox.Location.X, (int)(0.5 * this.Size.Height));
 
-            lCopyright.Text = "Exclusive by Mr.President  ©  2014." + "  ver. 1.2";
+            lCopyright.Text = "Exclusive by Mr.President  ©  2014." + "  ver. 1.3b";
             lCopyright.Location = new Point(lLOG.Location.X + LOGBox.Size.Width - lCopyright.Size.Width, (int)(this.Size.Height * 0.88));
-            
+
+            webClient = new WebClient();
+
             tbPass.UseSystemPasswordChar = true;
             rnd = new Random();
 
@@ -85,6 +86,8 @@ namespace Nebo.Mobi.Bot
             upd_timer.Tick += new System.EventHandler(this.upd_timer_Tick);
 
             ref_timer.Interval = 1000;
+
+            COMMUTATION_STR = "";
         }
 
         //получение полного списка этажей
@@ -100,38 +103,28 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Substring(49);
                 ab = ab.Remove(ab.IndexOf("\""));
 
-                webReq = WebRequest.Create(SERVER + ab);
                 try
                 {
-                    webResp = webReq.GetResponse();
+                    ClickLink(ab, "");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
                 }
-                stream = webResp.GetResponseStream();
-                sr = new StreamReader(stream, Encoding.UTF8);
-                HTML = sr.ReadToEnd();
             }
         }
 
         //тупо получение главного экрана
         private void GetHomePage()
         {
-            webReq = WebRequest.Create(SERVER + HOME_LINK);
             try
             {
-                webResp = webReq.GetResponse();
+                ClickLink(HOME_LINK, "");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
             }
-            stream = webResp.GetResponseStream();
-            sr = new StreamReader(stream, Encoding.UTF8);
-            HTML = sr.ReadToEnd();
 
             //получаем ссылку "Показать этажи"
             string ab = Parse(HTML, "Показать этажи");
@@ -140,29 +133,31 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Substring(49);
                 ab = ab.Remove(ab.IndexOf("\""));
 
-                webReq = WebRequest.Create(SERVER + ab);
                 try
                 {
-                    webResp = webReq.GetResponse();
+                    ClickLink(ab, "");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
                 }
-                stream = webResp.GetResponseStream();
-                sr = new StreamReader(stream, Encoding.UTF8);
-                HTML = sr.ReadToEnd();
             }
         }
-        
+
         //обновление содержания формы
         private void UpdForm()
         {
+            if (!Bot.IsAlive)
+            {
+                bStart.Enabled = true;
+                bStop.Enabled = false;
+            }
             this.Text = NAME + CONNECT_STATUS + ACTION_STATUS;
             if (COMMUTATION_STR != "")
             {
                 LOGBox.Text += COMMUTATION_STR;
+                LOGBox.SelectionStart = LOGBox.TextLength;
+                LOGBox.ScrollToCaret();
                 COMMUTATION_STR = "";
             }
             if (this.Text.Contains("Стоп"))
@@ -173,10 +168,8 @@ namespace Nebo.Mobi.Bot
             if (timeleft > 0)
             {
                 CONNECT_STATUS = string.Format("   Жду   {0}мин : {1:d2}сек\n\n", timeleft / 60, timeleft - ((timeleft / 60) * 60));
-                //if(upd_synch % 100 == 0) 
                 timeleft--;
             }
-            //upd_synch++;
         }
 
 
@@ -195,21 +188,17 @@ namespace Nebo.Mobi.Bot
         private void StartBot()
         {
             timeleft = 0;
-            //upd_synch = 0;
             //подключаеся, идем на главную, раскрываем этажи
             GoHome();
 
             //делаем 2 прогона (после лифта мб что-то доставят или купят випы)
-            CollectMoney();
-            PutMerch();
-            Buy();
-            GoneLift();
-
-            CollectMoney();
-            PutMerch();
-            Buy();
-            GoneLift();
-
+            for (int i = 0; i < 2; i++)
+            {
+                CollectMoney();
+                PutMerch();
+                Buy();
+                GoneLift();
+            }
             
             //получаем рандомное время ожидания
             upd_timer.Interval = rnd.Next(Convert.ToInt32(tbMinTime.Text)*60000, Convert.ToInt32(tbMaxTime.Text)*60000);
@@ -218,20 +207,36 @@ namespace Nebo.Mobi.Bot
             COMMUTATION_STR = string.Format("Жду   {0}", string.Format("{0}мин : {1:d2}сек\n\n", timeleft / 60, timeleft - ((timeleft / 60) * 60)) );
         }
 
+        //жмакнуть по ссылке
+        private void ClickLink(string link, string param)
+        {
+            webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0");
+            webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
+            webClient.Encoding = Encoding.UTF8;
+            HTML = webClient.UploadString(SERVER + link, param);
+        }
+
         //подключение к серверу
         private void Connect()
         {
-            webClient = new WebClient();
-            webClient.Encoding = Encoding.UTF8;
-
             Entery();
-            GetLoginLink();
 
             CONNECT_STATUS = "  -  Попытка авторизции";
             string param = string.Format("id5_hf_0=&login={0}&password={1}&%3Asubmit=%D0%92%D1%85%D0%BE%D0%B4", tbLogin.Text.Replace(' ', '+'), tbPass.Text);
 
-            webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-            HTML = webClient.UploadString(SERVER + LINK, param);
+            try
+            {
+                ClickLink(LINK, param);
+            }
+            catch(Exception ex)
+            {
+                ThreadAbort("ОШИБКА" + ex.Message + '\n');
+            }
+
+            if (HTML.Contains("Поле 'Имя в игре' обязательно для ввода.") || HTML.Contains("Неверное имя или пароль"))
+            {
+                ThreadAbort("ОШИБКА. Неверный логин или пароль.\n");
+            }
             CONNECT_STATUS = "  -  Онлайн";
 
             //фиксируем ссылку на Главную
@@ -241,29 +246,41 @@ namespace Nebo.Mobi.Bot
 
             Thread.Sleep(rnd.Next(1001, 2000));
         }
+
+        //метод сброса потока бота
+        private void ThreadAbort(string reason)
+        {
+            COMMUTATION_STR = reason;
+            CONNECT_STATUS = "";
+            ACTION_STATUS = "";
+            Thread.CurrentThread.Abort();
+        }
         
         //входим на домашнюю станицу получаем ссылку на форму входа
         private void Entery()
         {
             CONNECT_STATUS = "  -  Подключение к серверу";
-            webReq = WebRequest.Create(SERVER);
             try
             {
-                webResp = webReq.GetResponse();
+                ClickLink("login","");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                ThreadAbort("ОШИБКА. "+ ex.Message +'\n');
             }
-            stream = webResp.GetResponseStream();
-            sr = new StreamReader(stream, Encoding.UTF8);
-            HTML = sr.ReadToEnd();
 
-            LINK = Parse(HTML, ">Вход</a>");
-            LINK = LINK.Substring(25, 49);
+            LINK = Parse(HTML, "<form action=");
+            try
+            {
+                LINK = LINK.Substring(14, 107);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
+        
         private void GetLoginLink()
         {
             webReq = WebRequest.Create(SERVER + LINK);
@@ -273,8 +290,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
             }
             stream = webResp.GetResponseStream();
             sr = new StreamReader(stream, Encoding.UTF8);
@@ -290,7 +306,7 @@ namespace Nebo.Mobi.Bot
             }
             //получили ссылку "Вход"            
         }
-
+        
                 
         //парсит страницу, возвращает строку с ссылкой по маске
         private string Parse(string page, string mask)
@@ -329,20 +345,16 @@ namespace Nebo.Mobi.Bot
         //катаем лифт и получаем очередную ссылку
         private string GetLiftLink(string lnk)
         {
-            webReq = WebRequest.Create(SERVER + lnk);
             try
             {
-                webResp = webReq.GetResponse();
+                ClickLink(lnk, "");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return "";
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
             }
-            stream = webResp.GetResponseStream();
-            sr = new StreamReader(stream, Encoding.UTF8);
-            string s = sr.ReadToEnd();
-            string ab = Parse(s, "Поднять");
+
+            string ab = Parse(HTML, "Поднять");
             if (ab != "")
             {
                 ab = ab.Substring(111);
@@ -350,7 +362,7 @@ namespace Nebo.Mobi.Bot
             }
             else
             {
-                ab = Parse(s, "Получить");
+                ab = Parse(HTML, "Получить");
                 if (ab != "")
                 {
                     ab = ab.Substring(27);
@@ -380,7 +392,7 @@ namespace Nebo.Mobi.Bot
             lift_count = 0;
             if (ab != "")
             {
-                lift_count = 1; //один этаж-то уже собран)
+                //lift_count = 1; //один этаж-то уже собран)
                 ACTION_STATUS = "   -   Катаю лифт";
 
                 while (ab != "")
@@ -391,7 +403,6 @@ namespace Nebo.Mobi.Bot
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Доставлено пассажиров: {1}.\n", GetTime(), lift_count);
             }
-            //COMMUTATION_STR = string.Format("{0}  -  Доставлено пассажиров: {1}.\n", GetTime(), lift_count);
             Thread.Sleep(rnd.Next(30, 100));
         }
 
@@ -410,20 +421,16 @@ namespace Nebo.Mobi.Bot
         //переход поссылке сбора выручки и получения новой ссылки сбора выручки
         private string GetMoneyLink(string lnk)
         {
-            webReq = WebRequest.Create(SERVER + lnk);
             try
             {
-                webResp = webReq.GetResponse();
+                ClickLink(lnk, "");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return "";
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
             }
-            stream = webResp.GetResponseStream();
-            sr = new StreamReader(stream, Encoding.UTF8);
-            string s = sr.ReadToEnd();
-            string ab = Parse(s, "Собрать выручку!");
+
+            string ab = Parse(HTML, "Собрать выручку!");
             if (ab != "")
             {
                 ab = ab.Substring(114);
@@ -452,7 +459,6 @@ namespace Nebo.Mobi.Bot
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Этажей, с которых собрана выручка: {1}.\n", GetTime(), coins_count);
             }
-            //COMMUTATION_STR = string.Format("{0}  -  Этажей, с которых собрана выручка: {1}.\n", GetTime(), coins_count);
             Thread.Sleep(rnd.Next(30, 100));
         }
 
@@ -471,20 +477,16 @@ namespace Nebo.Mobi.Bot
         //переход поссылке сбора выручки и получения новой ссылки сбора выручки
         private string GetMerchLink(string lnk)
         {
-            webReq = WebRequest.Create(SERVER + lnk);
             try
             {
-                webResp = webReq.GetResponse();
+                ClickLink(lnk, "");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return "";
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
             }
-            stream = webResp.GetResponseStream();
-            sr = new StreamReader(stream, Encoding.UTF8);
-            string s = sr.ReadToEnd();
-            string ab = Parse(s, "Выложить товар");
+
+            string ab = Parse(HTML, "Выложить товар");
             if (ab != "")
             {
                 ab = ab.Substring(117);
@@ -513,7 +515,6 @@ namespace Nebo.Mobi.Bot
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Этажей, на которых выложен товар: {1}.\n", GetTime(), merch_count);
             }
-            //COMMUTATION_STR = string.Format("{0}  -  Этажей, на которых выложен товар: {1}.\n", GetTime(), merch_count);
             Thread.Sleep(rnd.Next(30, 100));
         }
 
@@ -534,21 +535,16 @@ namespace Nebo.Mobi.Bot
         //переход поссылке сбора выручки и получения новой ссылки сбора выручки
         private string GetBuyLink(string lnk)
         {
-            webReq = WebRequest.Create(SERVER + lnk);
             try
             {
-                webResp = webReq.GetResponse();
+                ClickLink(lnk, "");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return "";
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
             }
-            stream = webResp.GetResponseStream();
-            sr = new StreamReader(stream, Encoding.UTF8);
-            string s = sr.ReadToEnd();
 
-            string[] str = s.Split((char)'\n');
+            string[] str = HTML.Split((char)'\n');
             string ab = "";
             foreach (string ss in str)
             {
@@ -561,12 +557,15 @@ namespace Nebo.Mobi.Bot
             }
 
             //сама закупка
-            webReq = WebRequest.Create(SERVER + ab);
             Thread.Sleep(rnd.Next(300, 1000));
-            webResp = webReq.GetResponse();
-            stream = webResp.GetResponseStream();
-            sr = new StreamReader(stream, Encoding.UTF8);
-            s = sr.ReadToEnd();
+            try
+            {
+                ClickLink(ab, "");
+            }
+            catch (Exception ex)
+            {
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+            }
 
             ab = TryBuy(); 
             return ab;
@@ -591,7 +590,6 @@ namespace Nebo.Mobi.Bot
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Этажей, на которых закуплен товар: {1}.\n", GetTime(), buy_count);
             }
-            //COMMUTATION_STR = string.Format("{0}  -  Этажей, на которых закуплен товар: {1}.\n", GetTime(), buy_count);
             Thread.Sleep(rnd.Next(30, 100));
         }
 
