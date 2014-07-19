@@ -29,7 +29,7 @@ namespace Nebo.Mobi.Bot
         private Stream stream;
         private StreamReader sr;
         private Random rnd;
-        private System.Windows.Forms.Timer upd_timer;           //таймер запуска прохода бота
+        private System.Windows.Forms.Timer bot_timer;           //таймер запуска прохода бота
         private string HTML;                                    //html-код текущей страницы
         private string LINK;                                    //переменная для обмена ссылками
         private string HOME_LINK;                               //ссылка на домашнюю страницу
@@ -60,6 +60,8 @@ namespace Nebo.Mobi.Bot
             tbMinTime.Location = new Point(lMinTime.Location.X + lMinTime.Size.Width + (int)(0.005 * this.Size.Width), lMinTime.Location.Y - 2);
             tbMinTime.Size = new Size((int)(0.05 * this.Size.Width), tbMinTime.Size.Height);
 
+            cbDoNotPut.Location = new Point(lDiapazon.Location.X + lDiapazon.Size.Width + (int)(0.01 * this.Size.Width), tbMinTime.Location.Y);
+
             lMaxTime.Location = new Point(lDiapazon.Location.X, lMinTime.Location.Y + lMinTime.Size.Height + (int)(0.02 * this.Size.Height));
             tbMaxTime.Location = new Point(tbMinTime.Location.X, lMaxTime.Location.Y - 2);
             tbMaxTime.Size = new Size((int)(0.05 * this.Size.Width), tbMinTime.Size.Height);
@@ -73,7 +75,7 @@ namespace Nebo.Mobi.Bot
             LOGBox.Location = new Point(lLogin.Location.X, lLOG.Location.Y + lLOG.Size.Height + (int)(0.01 * this.Size.Height));
             LOGBox.Size = new Size(this.Size.Width - 3 * LOGBox.Location.X, (int)(0.5 * this.Size.Height));
 
-            lCopyright.Text = "Exclusive by Mr.President  ©  2014." + "  ver. 1.3b";
+            lCopyright.Text = "Exclusive by Mr.President  ©  2014." + "  ver. 1.4";
             lCopyright.Location = new Point(lLOG.Location.X + LOGBox.Size.Width - lCopyright.Size.Width, (int)(this.Size.Height * 0.88));
 
             webClient = new WebClient();
@@ -81,11 +83,12 @@ namespace Nebo.Mobi.Bot
             tbPass.UseSystemPasswordChar = true;
             rnd = new Random();
 
-            upd_timer = new System.Windows.Forms.Timer();
-            upd_timer.Enabled = false;
-            upd_timer.Tick += new System.EventHandler(this.upd_timer_Tick);
+            bot_timer = new System.Windows.Forms.Timer();
+            bot_timer.Tick += new System.EventHandler(this.bot_timer_Tick);
 
             ref_timer.Interval = 1000;
+            bot_timer.Enabled = false;
+            ref_timer.Enabled = false;
 
             COMMUTATION_STR = "";
         }
@@ -162,21 +165,22 @@ namespace Nebo.Mobi.Bot
             }
             if (this.Text.Contains("Стоп"))
             {
-                upd_timer.Start();
+                bot_timer.Start();
                 CONNECT_STATUS = "";
             }
+            
             if (timeleft > 0)
             {
-                CONNECT_STATUS = string.Format("   Жду   {0}мин : {1:d2}сек\n\n", timeleft / 60, timeleft - ((timeleft / 60) * 60));
+                CONNECT_STATUS = string.Format("   Жду   {0}мин : {1:d2}сек\n\n", (int)(timeleft / 60), timeleft - ((int)(timeleft / 60) * 60));
                 timeleft--;
             }
+             
         }
 
 
         //обработчик кнопки Старт
         private void bStart_Click(object sender, EventArgs e)
         {
-            ref_timer.Enabled = true;
             bStart.Enabled = false;
             bStop.Enabled = true;
             Bot = new Thread(StartBot);
@@ -187,24 +191,26 @@ namespace Nebo.Mobi.Bot
         //список дел бота
         private void StartBot()
         {
+            //сбрасываем таймер обратного отсчета
             timeleft = 0;
             //подключаеся, идем на главную, раскрываем этажи
             GoHome();
 
-            //делаем 2 прогона (после лифта мб что-то доставят или купят випы)
+            //делаем 2 прогона (мб что-то доставят или купят випы)
             for (int i = 0; i < 2; i++)
             {
                 CollectMoney();
-                PutMerch();
+                if(!cbDoNotPut.Checked) PutMerch();
                 Buy();
                 GoneLift();
             }
             
             //получаем рандомное время ожидания
-            upd_timer.Interval = rnd.Next(Convert.ToInt32(tbMinTime.Text)*60000, Convert.ToInt32(tbMaxTime.Text)*60000);
+            bot_timer.Interval = rnd.Next(Convert.ToInt32(tbMinTime.Text)*60000, Convert.ToInt32(tbMaxTime.Text)*60000);
+            bot_timer.Interval = (int)(bot_timer.Interval * 0.001) * 1000;
             CONNECT_STATUS = "   -   Стоп";
-            timeleft = upd_timer.Interval / 1000;
-            COMMUTATION_STR = string.Format("Жду   {0}", string.Format("{0}мин : {1:d2}сек\n\n", timeleft / 60, timeleft - ((timeleft / 60) * 60)) );
+            timeleft = (int)(bot_timer.Interval * 0.001);
+            COMMUTATION_STR = string.Format("Жду   {0}", string.Format("{0}мин : {1:d2}сек\n\n", (int)(timeleft / 60), timeleft - ((int)(timeleft / 60) * 60)) );
         }
 
         //жмакнуть по ссылке
@@ -375,10 +381,13 @@ namespace Nebo.Mobi.Bot
 
 
         //событие таймера
-        private void upd_timer_Tick(object sender, EventArgs e)
+        private void bot_timer_Tick(object sender, EventArgs e)
         {
-            upd_timer.Stop();
+            bot_timer.Stop();
+            bStart.Enabled = false;
+            bStop.Enabled = true;
             Bot = new Thread(StartBot);
+            ref_timer.Start();
             Bot.Start();
         }
 
@@ -392,7 +401,6 @@ namespace Nebo.Mobi.Bot
             lift_count = 0;
             if (ab != "")
             {
-                //lift_count = 1; //один этаж-то уже собран)
                 ACTION_STATUS = "   -   Катаю лифт";
 
                 while (ab != "")
@@ -522,12 +530,42 @@ namespace Nebo.Mobi.Bot
         //проверяем есть ли чего закупить
         private string TryBuy()
         {
+            string ab="";
             GetHomePage();
-            string ab = Parse(HTML, "Закупить товар");
-            if (ab != "")
+
+            //простейший случай - постоянный товарооборот
+            if (!cbDoNotPut.Checked)
             {
-                ab = ab.Substring(120);
-                ab = ab.Remove(ab.IndexOf('\"'));
+                ab = Parse(HTML, "Закупить товар");
+                if (ab != "")
+                {
+                    ab = ab.Substring(120);
+                    ab = ab.Remove(ab.IndexOf('\"'));
+                }
+            }
+
+            //а теперь если ждем инвесторов и ничего не выкладываем
+            else
+            {
+                string[] str = HTML.Split((char)'\n');
+                int i;
+                for (i = 0; i < str.Length; i++)
+                {
+                    //если есть чего закупать и нечего не доставляется
+                    if (str[i].Contains("st_empty.png") && !(str[i].Contains("st_stocking.png")))
+                        break;
+                }
+
+                if (i != str.Length) //типа если нашлось
+                {
+                    //переходим к строке с ссылкой на этаж
+                    i += 4;
+
+                    //получаем строку с сылкой на этаж
+                    ab = str[i];
+                    ab = ab.Substring(9);
+                    ab = ab.Remove(ab.IndexOf('\"'));
+                }
             }
             return ab;
         }
@@ -605,7 +643,7 @@ namespace Nebo.Mobi.Bot
             Bot.Abort();
             CONNECT_STATUS = "";
             ACTION_STATUS = "";
-            upd_timer.Stop();
+            bot_timer.Stop();
             ref_timer.Stop();
             bStart.Enabled = true;
             bStop.Enabled = false;
@@ -613,7 +651,7 @@ namespace Nebo.Mobi.Bot
             UpdForm();
         }
 
-        //для статусов
+        //обработчик таймера обновления формы и статусов
         private void ref_timer_Tick(object sender, EventArgs e)
         {
             UpdForm();

@@ -46,6 +46,7 @@
             this.tbMaxTime = new System.Windows.Forms.TextBox();
             this.lDiapazon = new System.Windows.Forms.Label();
             this.lUserInfo = new System.Windows.Forms.Label();
+            this.cbDoNotPut = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // LOGBox
@@ -128,7 +129,7 @@
             // 
             // ref_timer
             // 
-            this.ref_timer.Interval = 10;
+            this.ref_timer.Interval = 20;
             this.ref_timer.Tick += new System.EventHandler(this.ref_timer_Tick);
             // 
             // lMinTime
@@ -183,11 +184,24 @@
             this.lUserInfo.TabIndex = 4;
             this.lUserInfo.Text = "Учетная запись";
             // 
+            // cbDoNotPut
+            // 
+            this.cbDoNotPut.AutoSize = true;
+            this.cbDoNotPut.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cbDoNotPut.Location = new System.Drawing.Point(477, 27);
+            this.cbDoNotPut.Name = "cbDoNotPut";
+            this.cbDoNotPut.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.cbDoNotPut.Size = new System.Drawing.Size(145, 17);
+            this.cbDoNotPut.TabIndex = 10;
+            this.cbDoNotPut.Text = "НЕ выкладывать товар";
+            this.cbDoNotPut.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1244, 557);
+            this.Controls.Add(this.cbDoNotPut);
             this.Controls.Add(this.lCopyright);
             this.Controls.Add(this.lUserInfo);
             this.Controls.Add(this.lDiapazon);
@@ -230,6 +244,7 @@
         private System.Windows.Forms.TextBox tbMaxTime;
         private System.Windows.Forms.Label lDiapazon;
         private System.Windows.Forms.Label lUserInfo;
+        private System.Windows.Forms.CheckBox cbDoNotPut;
     }
 }
 
