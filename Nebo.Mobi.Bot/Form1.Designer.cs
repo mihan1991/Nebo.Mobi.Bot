@@ -47,6 +47,8 @@
             this.lDiapazon = new System.Windows.Forms.Label();
             this.lUserInfo = new System.Windows.Forms.Label();
             this.cbDoNotPut = new System.Windows.Forms.CheckBox();
+            this.tbRank = new System.Windows.Forms.TextBox();
+            this.cbFire = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // LOGBox
@@ -196,11 +198,35 @@
             this.cbDoNotPut.Text = "НЕ выкладывать товар";
             this.cbDoNotPut.UseVisualStyleBackColor = true;
             // 
+            // tbRank
+            // 
+            this.tbRank.Location = new System.Drawing.Point(693, 42);
+            this.tbRank.Name = "tbRank";
+            this.tbRank.Size = new System.Drawing.Size(25, 20);
+            this.tbRank.TabIndex = 6;
+            this.tbRank.Text = "9";
+            // 
+            // cbFire
+            // 
+            this.cbFire.AutoSize = true;
+            this.cbFire.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cbFire.Checked = true;
+            this.cbFire.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbFire.Location = new System.Drawing.Point(477, 45);
+            this.cbFire.Name = "cbFire";
+            this.cbFire.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.cbFire.Size = new System.Drawing.Size(210, 17);
+            this.cbFire.TabIndex = 10;
+            this.cbFire.Text = "Выселять жильцов с уровнем ниже ";
+            this.cbFire.UseVisualStyleBackColor = true;
+            this.cbFire.CheckedChanged += new System.EventHandler(this.cbFire_CheckedChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1244, 557);
+            this.Controls.Add(this.cbFire);
             this.Controls.Add(this.cbDoNotPut);
             this.Controls.Add(this.lCopyright);
             this.Controls.Add(this.lUserInfo);
@@ -209,6 +235,7 @@
             this.Controls.Add(this.bStop);
             this.Controls.Add(this.bStart);
             this.Controls.Add(this.tbPass);
+            this.Controls.Add(this.tbRank);
             this.Controls.Add(this.tbMaxTime);
             this.Controls.Add(this.tbMinTime);
             this.Controls.Add(this.tbLogin);
@@ -218,6 +245,7 @@
             this.Controls.Add(this.lLogin);
             this.Controls.Add(this.LOGBox);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = "Небоскребы. Бот";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
@@ -245,6 +273,8 @@
         private System.Windows.Forms.Label lDiapazon;
         private System.Windows.Forms.Label lUserInfo;
         private System.Windows.Forms.CheckBox cbDoNotPut;
+        private System.Windows.Forms.TextBox tbRank;
+        private System.Windows.Forms.CheckBox cbFire;
     }
 }
 

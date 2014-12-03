@@ -19,6 +19,7 @@ namespace Nebo.Mobi.Bot
         private int coins_count;                                //счетчик собранных выручек (точнее этажей)
         //private int bucks_count;                                //счетчик полученных баксов (пока только чаевые)
         private int merch_count;                                //счетчик выложенных товаров (точнее этажей)
+        private int killed_count;                               //счетчик выселенных 
 
         private static string SERVER = "http://nebo.mobi/";     //адрес сервера
         private static string NAME = "Небоскребы. Бот";         //имя окна
@@ -61,6 +62,8 @@ namespace Nebo.Mobi.Bot
             tbMinTime.Size = new Size((int)(0.05 * this.Size.Width), tbMinTime.Size.Height);
 
             cbDoNotPut.Location = new Point(lDiapazon.Location.X + lDiapazon.Size.Width + (int)(0.01 * this.Size.Width), tbMinTime.Location.Y);
+            cbFire.Location = new Point(cbDoNotPut.Location.X, cbDoNotPut.Location.Y + cbDoNotPut.Size.Height);
+            tbRank.Location = new Point(cbFire.Location.X + cbFire.Size.Width + (int)(0.01 * cbFire.Size.Width), cbFire.Location.Y-2);
 
             lMaxTime.Location = new Point(lDiapazon.Location.X, lMinTime.Location.Y + lMinTime.Size.Height + (int)(0.02 * this.Size.Height));
             tbMaxTime.Location = new Point(tbMinTime.Location.X, lMaxTime.Location.Y - 2);
@@ -75,7 +78,7 @@ namespace Nebo.Mobi.Bot
             LOGBox.Location = new Point(lLogin.Location.X, lLOG.Location.Y + lLOG.Size.Height + (int)(0.01 * this.Size.Height));
             LOGBox.Size = new Size(this.Size.Width - 3 * LOGBox.Location.X, (int)(0.5 * this.Size.Height));
 
-            lCopyright.Text = "Exclusive by Mr.President  ©  2014." + "  ver. 1.4";
+            lCopyright.Text = "Exclusive by Mr.President  ©  2014." + "  ver. 1.45";
             lCopyright.Location = new Point(lLOG.Location.X + LOGBox.Size.Width - lCopyright.Size.Width, (int)(this.Size.Height * 0.88));
 
             webClient = new WebClient();
@@ -199,6 +202,7 @@ namespace Nebo.Mobi.Bot
             //делаем 2 прогона (мб что-то доставят или купят випы)
             for (int i = 0; i < 2; i++)
             {
+                if(cbFire.Checked) Fire();
                 CollectMoney();
                 if(!cbDoNotPut.Checked) PutMerch();
                 Buy();
@@ -406,12 +410,12 @@ namespace Nebo.Mobi.Bot
                 while (ab != "")
                 {
                     ab = GetLiftLink(ab);
-                    Thread.Sleep(rnd.Next(351, 1500));
+                    Thread.Sleep(rnd.Next(100, 300));
                 }
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Доставлено пассажиров: {1}.\n", GetTime(), lift_count);
             }
-            Thread.Sleep(rnd.Next(30, 100));
+            Thread.Sleep(rnd.Next(1000, 1500));
         }
 
         //проверка есть ли выручка
@@ -452,6 +456,8 @@ namespace Nebo.Mobi.Bot
         private void CollectMoney()
         {
             //ищем ссылку сбора выручки
+            GetHomePage();
+
             string ab = TryMoney();
             coins_count = 0;
             if (ab != "")
@@ -461,13 +467,13 @@ namespace Nebo.Mobi.Bot
                 while (ab != "")
                 {
                     ab = GetMoneyLink(ab);
-                    Thread.Sleep(rnd.Next(351, 1500));
+                    Thread.Sleep(rnd.Next(100, 300));
                 }
 
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Этажей, с которых собрана выручка: {1}.\n", GetTime(), coins_count);
             }
-            Thread.Sleep(rnd.Next(30, 100));
+            Thread.Sleep(rnd.Next(1000, 1500));
         }
 
         //проверяем есть ли чего выложить
@@ -517,13 +523,13 @@ namespace Nebo.Mobi.Bot
                 while (ab != "")
                 {
                     ab = GetMerchLink(ab);
-                    Thread.Sleep(rnd.Next(351, 1500));
+                    Thread.Sleep(rnd.Next(100, 300));
                 }
 
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Этажей, на которых выложен товар: {1}.\n", GetTime(), merch_count);
             }
-            Thread.Sleep(rnd.Next(30, 100));
+            Thread.Sleep(rnd.Next(1000, 1500));
         }
 
 
@@ -551,7 +557,7 @@ namespace Nebo.Mobi.Bot
                 int i;
                 for (i = 0; i < str.Length; i++)
                 {
-                    //если есть чего закупать и нечего не доставляется
+                    //если есть чего закупать и ничего не доставляется
                     if (str[i].Contains("st_empty.png") && !(str[i].Contains("st_stocking.png")))
                         break;
                 }
@@ -595,7 +601,7 @@ namespace Nebo.Mobi.Bot
             }
 
             //сама закупка
-            Thread.Sleep(rnd.Next(300, 1000));
+            Thread.Sleep(rnd.Next(100, 300));
             try
             {
                 ClickLink(ab, "");
@@ -622,13 +628,13 @@ namespace Nebo.Mobi.Bot
                 {
                     ab = GetBuyLink(ab);
                     buy_count++;
-                    Thread.Sleep(rnd.Next(351, 1500));
+                    Thread.Sleep(rnd.Next(100, 300));
                 }
 
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Этажей, на которых закуплен товар: {1}.\n", GetTime(), buy_count);
             }
-            Thread.Sleep(rnd.Next(30, 100));
+            Thread.Sleep(rnd.Next(1000, 1500));
         }
 
         private string GetTime()
@@ -657,6 +663,238 @@ namespace Nebo.Mobi.Bot
             UpdForm();
         }
 
+        //тупо идем на главную, а затем в Гостиницу
+        private void GoHotel()
+        {
+            GetHomePage();
+
+            //идем в Гостиницу
+            string ab="";
+            string[] str = HTML.Split((char)'\n');
+            for (int i = 0; i < str.Length; i++)
+            {
+                //получаем ссылку на Гостиницу
+                if (str[i].Contains("Гостиница"))
+                {
+                    ab = str[i - 2];
+                    ab = ab.Substring(23);
+                    ab = ab.Remove(ab.IndexOf('\"'));
+                }
+            }
+
+            //идем в Гостиницу
+            try
+            {
+                ClickLink(ab, "");
+            }
+            catch (Exception ex)
+            {
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+            }
+        }
+
+        //увольняем жильцов ниже заданного уровня
+        private void Fire()
+        {
+            int level = Convert.ToInt32(tbRank.Text); //уровень, жильцов меньше которого выселять
+            int i = 0;
+            string ab = "";
+            int bak_i=0;
+
+            killed_count = 0;
+            ACTION_STATUS = "   -   Шмонаю гостиницу";
+
+            //идем в Гостиницу
+            GoHotel();
+                     
+
+            /*
+            foreach (string s in str) COMMUTATION_STR += s+'\n';
+            Thread.Sleep(1000);
+            ThreadAbort("ОТЛАДКА.\n");
+            */
+
+            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            
+            //начинаем зачистку
+
+            for(i=0; i<str.Length; i++)
+            {
+
+                //анализ жильца
+                if (str[i].Contains("\" class=\"white\""))
+                {
+                    //получаем ссылку на чувака
+                    ab = str[i].Substring(17);
+                    ab = ab.Remove(ab.IndexOf('\"'));
+
+                    //проверяем, не лучше ли этот житель уже работающих
+                    if (str[i + 7].Contains("(+)"))
+                    {
+                        /*
+                        bak_i = i + 7; //бекапим строку чтобы снова не начать с чуваом возиться
+
+                        //пытаемся назначить на работу    
+                        //если назначен, то парсим страницу сначала
+                        if (GoToWork(ab)) i = 0;
+                        //иначе - со строки (+) - т.е. со следующего парня
+                        else i = bak_i;
+
+                        //а теперь результаты надо сбросить
+                        str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        
+                        Thread.Sleep(rnd.Next(100, 300));
+                        */
+
+                        //заглушка
+                        bak_i = i + 7;
+                        i += 7;
+                        str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        Thread.Sleep(rnd.Next(100, 300));
+                    }
+
+                    //если сраный дармоед ниже заданного уровня - выкинуть
+                    else
+                    {
+                        //получаем уровень и сверяем с заданным
+                        string rank = str[i + 2];
+                        rank = rank.Substring(17);
+                        rank = rank.Remove(1);
+                        int l = Convert.ToInt32(rank);
+
+                        //если уровень меньше заданного
+                        if (l < level)
+                        {
+                            Kill(ab);
+                            //а теперь результаты надо сбросить
+                            str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                            i = bak_i;
+                            Thread.Sleep(rnd.Next(100, 300));
+                        }
+                    }
+                }                
+            }
+            ACTION_STATUS = "";
+            if(killed_count!=0) COMMUTATION_STR = string.Format("{0}  -  Выселено дармоедов: {1}.\n", GetTime(), killed_count);
+            Thread.Sleep(rnd.Next(1000, 1500));
+        }
+
+        private void Kill(string ab)
+        {
+            //входим в чувака
+            try
+            {
+                ClickLink(ab, "");
+            }
+            catch (Exception ex)
+            {
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+            }
+            Thread.Sleep(rnd.Next(100, 500));
+
+            //ищем кнопку "Выселить"
+            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < str.Length; i++)
+            {
+                //получаем ссылку "Выселить"
+                if (str[i].Contains("Выселить"))
+                {
+                    ab = str[i];
+                    ab = ab.Substring(22);
+                    ab = ab.Remove(ab.IndexOf('\"'));
+
+                    //пытаемся выкинуть нах
+                    try
+                    {
+                        ClickLink(ab, "");
+                        HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        killed_count++;
+                    }
+                    catch (Exception ex)
+                    {
+                        ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    }
+                    Thread.Sleep(rnd.Next(100, 500));
+                    break;
+                }
+            }
+        }
+
+        //попытка устроить на работу
+        private bool GoToWork(string ab)
+        {
+            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            //входим в чувака
+            try
+            {
+                ClickLink(ab, "");
+                
+            }
+            catch (Exception ex)
+            {
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+            }
+
+            ab = Parse(HTML, "Найти работу");
+            ab = ab.Substring(22);
+            ab = ab.Remove(ab.IndexOf('\"'));
+            Thread.Sleep(rnd.Next(100, 300));
+
+            //жмакаем на "Найти работу"
+            try
+            {
+                ClickLink(ab, "");
+
+            }
+            catch (Exception ex)
+            {
+                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+            }
+
+            
+            //идем дальше только если ничего не доставляется
+            if (HTML.Contains("/icons/st_sell.png") || HTML.Contains("/icons/st_sold.png") || HTML.Contains("/icons/st_stocked.png") || HTML.Contains("/icons/st_empty.png") && !HTML.Contains("/icons/st_stocking.png"))
+            {
+                //разбиваем страницу на строки
+                str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                
+                //получаем ссылку на этаж
+                for (int i = 0; i < str.Length; i++)
+                {
+
+                    ab = str[i - 3].Substring(23);
+                    ab = ab.Remove(ab.IndexOf('\"'));
+                    /*COMMUTATION_STR = ab + '\n';
+                    Thread.Sleep(1000);
+                    ThreadAbort("ОТЛАДКА.\n");*/
+
+                    //жмакаем на этаж
+                    try
+                    {
+                        ClickLink(ab, "");
+
+                    }
+                    catch (Exception ex)
+                    {
+                        ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    }
+
+                    str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string s in str) COMMUTATION_STR += s + '\n';
+                    Thread.Sleep(1000);
+                    ThreadAbort("ОТЛАДКА.\n");
+                    return true;
+                }
+            }
+
+            //ну а если доставляется - надо идти по остальным
+            foreach (string s in str) COMMUTATION_STR += s +'\n';
+            Thread.Sleep(1000);
+            ThreadAbort("ОТЛАДКА.\n");
+            return false;
+        }
+
+
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             try
@@ -664,6 +902,12 @@ namespace Nebo.Mobi.Bot
                 Bot.Abort();
             }
             catch { }
+        }
+
+        private void cbFire_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cbFire.Checked) tbRank.Enabled = true;
+            else tbRank.Enabled = false;
         }
     }
 }
