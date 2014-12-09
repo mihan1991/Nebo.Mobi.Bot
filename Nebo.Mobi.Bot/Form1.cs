@@ -26,10 +26,10 @@ namespace Nebo.Mobi.Bot
         private static string NAME = "Небоскребы. Бот";         //имя окна
         private string CONNECT_STATUS = "";                     //статус соединения
         private string ACTION_STATUS = "";                      //теекущее действие
-        private WebRequest webReq;
-        private WebResponse webResp;
-        private Stream stream;
-        private StreamReader sr;
+        //private WebRequest webReq;
+        //private WebResponse webResp;
+        //private Stream stream;
+        //private StreamReader sr;
         private Random rnd;
         private System.Windows.Forms.Timer bot_timer;           //таймер запуска прохода бота
         private string HTML;                                    //html-код текущей страницы
@@ -79,7 +79,7 @@ namespace Nebo.Mobi.Bot
             LOGBox.Location = new Point(lLogin.Location.X, lLOG.Location.Y + lLOG.Size.Height + (int)(0.01 * this.Size.Height));
             LOGBox.Size = new Size(this.Size.Width - 3 * LOGBox.Location.X, (int)(0.5 * this.Size.Height));
 
-            lCopyright.Text = "Exclusive by Mr.President  ©  2014." + "  ver. 1.5";
+            lCopyright.Text = "Exclusive by Mr.President  ©  2014." + "  ver. 1.6";
             lCopyright.Location = new Point(lLOG.Location.X + LOGBox.Size.Width - lCopyright.Size.Width, (int)(this.Size.Height * 0.88));
 
             webClient = new WebClient();
@@ -116,7 +116,7 @@ namespace Nebo.Mobi.Bot
                 }
                 catch (Exception ex)
                 {
-                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                 }
             }
         }
@@ -130,7 +130,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
 
             //получаем ссылку "Показать этажи"
@@ -146,7 +146,7 @@ namespace Nebo.Mobi.Bot
                 }
                 catch (Exception ex)
                 {
-                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                 }
             }
         }
@@ -209,10 +209,14 @@ namespace Nebo.Mobi.Bot
                 Buy();
                 GoneLift();
             }
-            
-            
+
+            RelaxMan();
+        }
+
+        private void RelaxMan()
+        {
             int min_time = 0, max_time = 0;
-            
+
             //защита от дурака
             try
             {
@@ -223,7 +227,7 @@ namespace Nebo.Mobi.Bot
                 ThreadAbort("ОШИБКА. Поле \"От:\" должно содержать значение в диапазоне от 1 до 200.\n");
             }
 
-            if(min_time<1 || min_time>200)
+            if (min_time < 1 || min_time > 200)
                 ThreadAbort("ОШИБКА. Поле \"От:\" должно содержать значение в диапазоне от 1 до 200.\n");
 
             try
@@ -246,7 +250,7 @@ namespace Nebo.Mobi.Bot
             bot_timer.Interval = (int)(bot_timer.Interval * 0.001) * 1000;
             CONNECT_STATUS = "   -   Стоп";
             timeleft = (int)(bot_timer.Interval * 0.001);
-            COMMUTATION_STR = string.Format("Жду   {0}", string.Format("{0}мин : {1:d2}сек\n\n", (int)(timeleft / 60), timeleft - ((int)(timeleft / 60) * 60)) );
+            COMMUTATION_STR = string.Format("Жду   {0}", string.Format("{0}мин : {1:d2}сек\n\n", (int)(timeleft / 60), timeleft - ((int)(timeleft / 60) * 60)));
         }
 
         //жмакнуть по ссылке
@@ -272,7 +276,7 @@ namespace Nebo.Mobi.Bot
             }
             catch(Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
 
             if (HTML.Contains("Поле 'Имя в игре' обязательно для ввода.") || HTML.Contains("Неверное имя или пароль"))
@@ -297,6 +301,17 @@ namespace Nebo.Mobi.Bot
             ACTION_STATUS = "";
             Thread.CurrentThread.Abort();
         }
+
+        //метод торможения потока бота
+        private void ThreadSleep(string reason)
+        {
+            COMMUTATION_STR = reason;
+            CONNECT_STATUS = "";
+            ACTION_STATUS = "";           
+            RelaxMan();
+            Thread.CurrentThread.Abort();
+            //Bot.Start();
+        }
         
         //входим на домашнюю станицу получаем ссылку на форму входа
         private void Entery()
@@ -308,7 +323,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. "+ ex.Message +'\n');
+                ThreadSleep("ОШИБКА. "+ ex.Message +'\n');
             }
 
             LINK = Parse(HTML, "<form action=");
@@ -318,11 +333,11 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
         }
 
-        
+        /*
         private void GetLoginLink()
         {
             webReq = WebRequest.Create(SERVER + LINK);
@@ -348,7 +363,7 @@ namespace Nebo.Mobi.Bot
             }
             //получили ссылку "Вход"            
         }
-        
+        */
                 
         //парсит страницу, возвращает строку с ссылкой по маске
         private string Parse(string page, string mask)
@@ -393,7 +408,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
 
             string ab = Parse(HTML, "Поднять");
@@ -471,7 +486,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
 
             string ab = Parse(HTML, "Собрать выручку!");
@@ -529,7 +544,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
 
             string ab = Parse(HTML, "Выложить товар");
@@ -617,7 +632,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
 
             string[] str = HTML.Split((char)'\n');
@@ -640,7 +655,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
 
             ab = TryBuy(); 
@@ -721,7 +736,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
         }
 
@@ -778,7 +793,7 @@ namespace Nebo.Mobi.Bot
                         }
                         catch (Exception ex)
                         {
-                            ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                            ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                         }
 
                         //пытаемся назначить на работу    
@@ -852,7 +867,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
             Thread.Sleep(rnd.Next(100, 500));
 
@@ -876,7 +891,7 @@ namespace Nebo.Mobi.Bot
                     }
                     catch (Exception ex)
                     {
-                        ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                        ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                     }
                     Thread.Sleep(rnd.Next(100, 500));
                     break;
@@ -897,7 +912,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
             Thread.Sleep(rnd.Next(100, 300));
 
@@ -914,7 +929,7 @@ namespace Nebo.Mobi.Bot
             }
             catch (Exception ex)
             {
-                ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
             Thread.Sleep(rnd.Next(100, 300));
 
@@ -932,7 +947,7 @@ namespace Nebo.Mobi.Bot
                 }
                 catch (Exception ex)
                 {
-                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                 }
                 Thread.Sleep(rnd.Next(100, 300));
 
@@ -965,7 +980,7 @@ namespace Nebo.Mobi.Bot
                 }
                 catch (Exception ex)
                 {
-                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                 }
                 Thread.Sleep(rnd.Next(100, 300));
 
@@ -993,7 +1008,7 @@ namespace Nebo.Mobi.Bot
                 }
                 catch (Exception ex)
                 {
-                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                 }
                 Thread.Sleep(rnd.Next(100, 300));
 
@@ -1011,7 +1026,7 @@ namespace Nebo.Mobi.Bot
                 }
                 catch (Exception ex)
                 {
-                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                 }
                 Thread.Sleep(rnd.Next(100, 300));
 
@@ -1020,7 +1035,7 @@ namespace Nebo.Mobi.Bot
                 str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < str.Length; i++)
                 {
-                    if (str[i].Contains("Уволен из"))
+                    if (str[i].Contains("Уволен из") || str[i].Contains("Уволена из"))
                     {
                         ab = str[i + 1];
                         break;
@@ -1039,7 +1054,7 @@ namespace Nebo.Mobi.Bot
                 }
                 catch (Exception ex)
                 {
-                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                 }
                 Thread.Sleep(rnd.Next(100, 300));
 
@@ -1066,7 +1081,7 @@ namespace Nebo.Mobi.Bot
                 }
                 catch (Exception ex)
                 {
-                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                 }
                 Thread.Sleep(rnd.Next(100, 300));
 
@@ -1093,7 +1108,7 @@ namespace Nebo.Mobi.Bot
                 }
                 catch (Exception ex)
                 {
-                    ThreadAbort("ОШИБКА. " + ex.Message + '\n');
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
                 }
                 Thread.Sleep(rnd.Next(100, 300));
 
