@@ -47,8 +47,12 @@
             this.lDiapazon = new System.Windows.Forms.Label();
             this.lUserInfo = new System.Windows.Forms.Label();
             this.cbDoNotPut = new System.Windows.Forms.CheckBox();
-            this.tbRank = new System.Windows.Forms.TextBox();
+            this.tbFireLess = new System.Windows.Forms.TextBox();
             this.cbFire = new System.Windows.Forms.CheckBox();
+            this.cbFire9 = new System.Windows.Forms.CheckBox();
+            this.TrayIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this.cbDoNotSaveThePass = new System.Windows.Forms.CheckBox();
+            this.bSave = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // LOGBox
@@ -90,10 +94,12 @@
             this.tbPass.Name = "tbPass";
             this.tbPass.Size = new System.Drawing.Size(145, 20);
             this.tbPass.TabIndex = 2;
+            this.tbPass.TextChanged += new System.EventHandler(this.tbPass_TextChanged);
+            this.tbPass.Leave += new System.EventHandler(this.tbPass_Leave);
             // 
             // bStart
             // 
-            this.bStart.Location = new System.Drawing.Point(13, 72);
+            this.bStart.Location = new System.Drawing.Point(13, 103);
             this.bStart.Name = "bStart";
             this.bStart.Size = new System.Drawing.Size(75, 23);
             this.bStart.TabIndex = 3;
@@ -103,7 +109,7 @@
             // 
             // bStop
             // 
-            this.bStop.Location = new System.Drawing.Point(130, 72);
+            this.bStop.Location = new System.Drawing.Point(157, 101);
             this.bStop.Name = "bStop";
             this.bStop.Size = new System.Drawing.Size(75, 23);
             this.bStop.TabIndex = 4;
@@ -198,13 +204,13 @@
             this.cbDoNotPut.Text = "НЕ выкладывать товар";
             this.cbDoNotPut.UseVisualStyleBackColor = true;
             // 
-            // tbRank
+            // tbFireLess
             // 
-            this.tbRank.Location = new System.Drawing.Point(693, 42);
-            this.tbRank.Name = "tbRank";
-            this.tbRank.Size = new System.Drawing.Size(25, 20);
-            this.tbRank.TabIndex = 6;
-            this.tbRank.Text = "9";
+            this.tbFireLess.Location = new System.Drawing.Point(693, 42);
+            this.tbFireLess.Name = "tbFireLess";
+            this.tbFireLess.Size = new System.Drawing.Size(25, 20);
+            this.tbFireLess.TabIndex = 6;
+            this.tbFireLess.Text = "9";
             // 
             // cbFire
             // 
@@ -221,21 +227,68 @@
             this.cbFire.UseVisualStyleBackColor = true;
             this.cbFire.CheckedChanged += new System.EventHandler(this.cbFire_CheckedChanged);
             // 
+            // cbFire9
+            // 
+            this.cbFire9.AutoSize = true;
+            this.cbFire9.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cbFire9.Checked = true;
+            this.cbFire9.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbFire9.Location = new System.Drawing.Point(477, 68);
+            this.cbFire9.Name = "cbFire9";
+            this.cbFire9.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.cbFire9.Size = new System.Drawing.Size(241, 17);
+            this.cbFire9.TabIndex = 10;
+            this.cbFire9.Text = "(-) Выселять жильцов 9 уровня со знаком ";
+            this.cbFire9.UseVisualStyleBackColor = true;
+            this.cbFire9.CheckedChanged += new System.EventHandler(this.cbFire_CheckedChanged);
+            // 
+            // TrayIcon
+            // 
+            this.TrayIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("TrayIcon.Icon")));
+            this.TrayIcon.Text = "Nebo.Mobi.Bot";
+            this.TrayIcon.Visible = true;
+            this.TrayIcon.MouseClick += new System.Windows.Forms.MouseEventHandler(this.TrayIcon_MouseClick);
+            // 
+            // cbDoNotSaveThePass
+            // 
+            this.cbDoNotSaveThePass.AutoSize = true;
+            this.cbDoNotSaveThePass.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cbDoNotSaveThePass.Location = new System.Drawing.Point(16, 68);
+            this.cbDoNotSaveThePass.Name = "cbDoNotSaveThePass";
+            this.cbDoNotSaveThePass.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.cbDoNotSaveThePass.Size = new System.Drawing.Size(135, 17);
+            this.cbDoNotSaveThePass.TabIndex = 11;
+            this.cbDoNotSaveThePass.Text = "НЕ сохранять пароль";
+            this.cbDoNotSaveThePass.UseVisualStyleBackColor = true;
+            // 
+            // bSave
+            // 
+            this.bSave.Location = new System.Drawing.Point(157, 72);
+            this.bSave.Name = "bSave";
+            this.bSave.Size = new System.Drawing.Size(75, 23);
+            this.bSave.TabIndex = 4;
+            this.bSave.Text = "Сохранить";
+            this.bSave.UseVisualStyleBackColor = true;
+            this.bSave.Click += new System.EventHandler(this.bSave_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1244, 557);
+            this.Controls.Add(this.cbDoNotSaveThePass);
+            this.Controls.Add(this.cbFire9);
             this.Controls.Add(this.cbFire);
             this.Controls.Add(this.cbDoNotPut);
             this.Controls.Add(this.lCopyright);
             this.Controls.Add(this.lUserInfo);
             this.Controls.Add(this.lDiapazon);
             this.Controls.Add(this.lLOG);
+            this.Controls.Add(this.bSave);
             this.Controls.Add(this.bStop);
             this.Controls.Add(this.bStart);
             this.Controls.Add(this.tbPass);
-            this.Controls.Add(this.tbRank);
+            this.Controls.Add(this.tbFireLess);
             this.Controls.Add(this.tbMaxTime);
             this.Controls.Add(this.tbMinTime);
             this.Controls.Add(this.tbLogin);
@@ -249,6 +302,7 @@
             this.Name = "Form1";
             this.Text = "Небоскребы. Бот";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
+            this.Resize += new System.EventHandler(this.Form1_Resize);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -273,8 +327,12 @@
         private System.Windows.Forms.Label lDiapazon;
         private System.Windows.Forms.Label lUserInfo;
         private System.Windows.Forms.CheckBox cbDoNotPut;
-        private System.Windows.Forms.TextBox tbRank;
+        private System.Windows.Forms.TextBox tbFireLess;
         private System.Windows.Forms.CheckBox cbFire;
+        private System.Windows.Forms.CheckBox cbFire9;
+        private System.Windows.Forms.NotifyIcon TrayIcon;
+        private System.Windows.Forms.CheckBox cbDoNotSaveThePass;
+        private System.Windows.Forms.Button bSave;
     }
 }
 

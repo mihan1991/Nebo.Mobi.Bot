@@ -14,6 +14,9 @@ namespace Nebo.Mobi.Bot
 {
     public partial class Form1 : Form
     {
+        private string version = "1.7";                         //версия бота
+
+        //блок разовой статистики
         private int lift_count;                                 //счетчик перевезенных в лифте
         private int buy_count;                                  //счетчик купленных товаров
         private int coins_count;                                //счетчик собранных выручек (точнее этажей)
@@ -21,6 +24,15 @@ namespace Nebo.Mobi.Bot
         private int merch_count;                                //счетчик выложенных товаров (точнее этажей)
         private int killed_count;                               //счетчик выселенных 
         private int new_worker_count;                           //счетчик новых нанятых
+
+        //блок общей статистики работы (отображается по клику в трее)
+        private int Lift_Count;
+        private int Buy_Count;
+        private int Coins_Count;
+        private int Merch_Count;
+        private int Killed_Count;
+        private int New_Worker_Count;
+        private int Action_Count;
 
         private static string SERVER = "http://nebo.mobi/";     //адрес сервера
         private static string NAME = "Небоскребы. Бот";         //имя окна
@@ -40,47 +52,61 @@ namespace Nebo.Mobi.Bot
 
         private Thread Bot;                                     //переменная потока бота
 
+        private Config cfg;                                     //объект класса настроек
+        private bool PassChanged;                               //проверка на изменение пароля (нужно для шифрования)
         private WebClient webClient;
 
         public Form1()
         {
             InitializeComponent();
+
+            //подгружаем настройки
+            cfg = new Config();
+            LoadConfig();
+
+            //отрисовываем форму
             this.Size = new Size((int)(0.5 * Screen.PrimaryScreen.Bounds.Width), (int)(0.5 * Screen.PrimaryScreen.Bounds.Height));
 
             lUserInfo.Location = new Point((int)(0.02 * this.Size.Width), (int)(0.02 * this.Size.Height));
-            lDiapazon.Location = new Point(lUserInfo.Location.X + lUserInfo.Size.Width + (int)(0.3 * this.Size.Height), lUserInfo.Location.Y);
-            
+                        
             lLogin.Location = new Point(lUserInfo.Location.X, lUserInfo.Location.Y + lUserInfo.Size.Height + (int)(0.01 * this.Size.Height));
             tbLogin.Location = new Point(lLogin.Location.X + lLogin.Size.Width + (int)(0.005 * this.Size.Width), lLogin.Location.Y - 2);
-            tbLogin.Size = new Size((int)(0.2 * this.Size.Width), tbLogin.Size.Height);
+            tbLogin.Size = new Size((int)(0.22 * this.Size.Width), tbLogin.Size.Height);
 
             lPass.Location = new Point(lLogin.Location.X, lLogin.Location.Y + lLogin.Size.Height + (int)(0.02 * this.Size.Height));
             tbPass.Location = new Point(tbLogin.Location.X, lPass.Location.Y - 2);
-            tbPass.Size = new Size((int)(0.2 * this.Size.Width), tbPass.Size.Height);
+            tbPass.Size = new Size((int)(0.22 * this.Size.Width), tbPass.Size.Height);
 
+            lDiapazon.Location = new Point(tbPass.Location.X + tbPass.Size.Width + (int)(0.01 * this.Size.Height), lUserInfo.Location.Y);
             lMinTime.Location = new Point(lDiapazon.Location.X, lLogin.Location.Y);
             tbMinTime.Location = new Point(lMinTime.Location.X + lMinTime.Size.Width + (int)(0.005 * this.Size.Width), lMinTime.Location.Y - 2);
             tbMinTime.Size = new Size((int)(0.05 * this.Size.Width), tbMinTime.Size.Height);
 
             cbDoNotPut.Location = new Point(lDiapazon.Location.X + lDiapazon.Size.Width + (int)(0.01 * this.Size.Width), tbMinTime.Location.Y);
             cbFire.Location = new Point(cbDoNotPut.Location.X, cbDoNotPut.Location.Y + cbDoNotPut.Size.Height);
-            tbRank.Location = new Point(cbFire.Location.X + cbFire.Size.Width + (int)(0.01 * cbFire.Size.Width), cbFire.Location.Y-2);
+            cbFire9.Location = new Point(cbFire.Location.X, cbFire.Location.Y + cbFire.Size.Height);
+            tbFireLess.Location = new Point(cbFire.Location.X + cbFire.Size.Width + (int)(0.01 * cbFire.Size.Width), cbFire.Location.Y-2);
 
             lMaxTime.Location = new Point(lDiapazon.Location.X, lMinTime.Location.Y + lMinTime.Size.Height + (int)(0.02 * this.Size.Height));
             tbMaxTime.Location = new Point(tbMinTime.Location.X, lMaxTime.Location.Y - 2);
             tbMaxTime.Size = new Size((int)(0.05 * this.Size.Width), tbMinTime.Size.Height);
 
-            bStart.Location = new Point(lLogin.Location.X, (int)(0.15 * this.Size.Height));
+            cbDoNotSaveThePass.Location = new Point(tbPass.Location.X, tbPass.Location.Y + tbPass.Size.Height + (int)(0.01 * this.Size.Height));
+
+            bStart.Location = new Point(lLogin.Location.X, cbDoNotSaveThePass.Location.Y + cbDoNotSaveThePass.Size.Height + (int)(0.02 * this.Size.Height));
             bStop.Location = new Point(tbLogin.Location.X + tbLogin.Size.Width - bStop.Size.Width, bStart.Location.Y);
+            bSave.Location = new Point(cbFire9.Location.X, bStart.Location.Y);
             bStop.Enabled = false;
 
-            lLOG.Location = new Point(lLogin.Location.X, (int)(0.3 * this.Size.Height));
+            lLOG.Location = new Point(lLogin.Location.X, bStart.Location.Y + bStart.Size.Height*2);
+
+            lCopyright.Text = "Exclusive by Mr.President  ©  2014 - 2015." + "  ver. " + Version.Parse(version);
+            lCopyright.Location = new Point(this.Size.Width - (int)(1.1*lCopyright.Size.Width), this.Size.Height - 5 * lCopyright.Size.Height);
 
             LOGBox.Location = new Point(lLogin.Location.X, lLOG.Location.Y + lLOG.Size.Height + (int)(0.01 * this.Size.Height));
-            LOGBox.Size = new Size(this.Size.Width - 3 * LOGBox.Location.X, (int)(0.5 * this.Size.Height));
-
-            lCopyright.Text = "Exclusive by Mr.President  ©  2014." + "  ver. 1.6";
-            lCopyright.Location = new Point(lLOG.Location.X + LOGBox.Size.Width - lCopyright.Size.Width, (int)(this.Size.Height * 0.88));
+            LOGBox.Size = new Size(this.Size.Width - 3 * LOGBox.Location.X, this.Size.Height - LOGBox.Location.Y - 6 * lCopyright.Size.Height);
+            
+            this.MinimumSize = new System.Drawing.Size(tbFireLess.Location.X + tbFireLess.Size.Width*2, (int)(0.5*Screen.PrimaryScreen.Bounds.Height));
 
             webClient = new WebClient();
 
@@ -95,6 +121,41 @@ namespace Nebo.Mobi.Bot
             ref_timer.Enabled = false;
 
             COMMUTATION_STR = "";
+            PassChanged = false;
+
+            //обнуление общей статистики
+            Lift_Count = Buy_Count = Coins_Count = Merch_Count = Killed_Count = New_Worker_Count = Action_Count = 0;
+        }
+
+        //подгружаем настройки
+        private void LoadConfig()
+        {
+            cfg.LoadConfig();
+            tbLogin.Text = cfg.Login;
+            tbPass.Text = cfg.Pass;
+            tbMinTime.Text = cfg.MinTime;
+            tbMaxTime.Text = cfg.MaxTime;
+            cbDoNotSaveThePass.Checked = Convert.ToBoolean(cfg.DoNotSaveThePass);
+            cbDoNotPut.Checked = Convert.ToBoolean(cfg.DoNotPut);            
+            cbFire.Checked = Convert.ToBoolean(cfg.Fire);
+            tbFireLess.Text = cfg.FireLess;
+            cbFire9.Checked = Convert.ToBoolean(cfg.Fire9);
+        }
+
+        private void SaveConfig()
+        {
+            cfg.Login = tbLogin.Text;
+            if (cbDoNotSaveThePass.Checked)
+                cfg.Pass = "";
+            else cfg.Pass = tbPass.Text;
+            cfg.DoNotSaveThePass = cbDoNotSaveThePass.Checked.ToString().ToLower();
+            cfg.MinTime = tbMinTime.Text;
+            cfg.MaxTime = tbMaxTime.Text;
+            cfg.DoNotPut = cbDoNotPut.Checked.ToString().ToLower();
+            cfg.Fire = cbFire.Checked.ToString().ToLower();
+            cfg.FireLess = tbFireLess.Text;
+            cfg.Fire9 = cbFire9.Checked.ToString().ToLower();
+            cfg.WriteConfig();
         }
 
         //получение полного списка этажей
@@ -110,29 +171,15 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Substring(49);
                 ab = ab.Remove(ab.IndexOf("\""));
 
-                try
-                {
-                    ClickLink(ab, "");
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                }
+                ClickLink(ab, "");
             }
         }
 
         //тупо получение главного экрана
         private void GetHomePage()
         {
-            try
-            {
-                ClickLink(HOME_LINK, "");
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
-
+            ClickLink(HOME_LINK, "");
+            
             //получаем ссылку "Показать этажи"
             string ab = Parse(HTML, "Показать этажи");
             if (ab != "")
@@ -140,14 +187,8 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Substring(49);
                 ab = ab.Remove(ab.IndexOf("\""));
 
-                try
-                {
-                    ClickLink(ab, "");
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                }
+                ClickLink(ab, "");
+
             }
         }
 
@@ -208,7 +249,15 @@ namespace Nebo.Mobi.Bot
                 if(!cbDoNotPut.Checked) PutMerch();
                 Buy();
                 GoneLift();
+
+
+                ///Разработка
+                ///
+                //InviteToCity();
+                ///
+                ///
             }
+            Action_Count++; //считаем оба прогона за 1
 
             RelaxMan();
         }
@@ -259,7 +308,14 @@ namespace Nebo.Mobi.Bot
             webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0");
             webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
             webClient.Encoding = Encoding.UTF8;
-            HTML = webClient.UploadString(SERVER + link, param);
+            try
+            {
+                HTML = webClient.UploadString(SERVER + link, param);
+            }
+            catch (Exception ex)
+            {
+                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
+            }
         }
 
         //подключение к серверу
@@ -268,17 +324,10 @@ namespace Nebo.Mobi.Bot
             Entery();
 
             CONNECT_STATUS = "  -  Попытка авторизции";
-            string param = string.Format("id5_hf_0=&login={0}&password={1}&%3Asubmit=%D0%92%D1%85%D0%BE%D0%B4", tbLogin.Text.Replace(' ', '+'), tbPass.Text);
+            string param = string.Format("id5_hf_0=&login={0}&password={1}&%3Asubmit=%D0%92%D1%85%D0%BE%D0%B4", tbLogin.Text.Replace(' ', '+'), Crypto.DecryptStr(tbPass.Text));
 
-            try
-            {
-                ClickLink(LINK, param);
-            }
-            catch(Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
-
+            ClickLink(LINK, param);
+            
             if (HTML.Contains("Поле 'Имя в игре' обязательно для ввода.") || HTML.Contains("Неверное имя или пароль"))
             {
                 ThreadAbort("ОШИБКА. Неверный логин или пароль.\n");
@@ -317,14 +366,9 @@ namespace Nebo.Mobi.Bot
         private void Entery()
         {
             CONNECT_STATUS = "  -  Подключение к серверу";
-            try
-            {
-                ClickLink("login","");
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. "+ ex.Message +'\n');
-            }
+            
+            ClickLink("login","");
+
 
             LINK = Parse(HTML, "<form action=");
             try
@@ -402,14 +446,7 @@ namespace Nebo.Mobi.Bot
         //катаем лифт и получаем очередную ссылку
         private string GetLiftLink(string lnk)
         {
-            try
-            {
-                ClickLink(lnk, "");
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
+            ClickLink(lnk, "");
 
             string ab = Parse(HTML, "Поднять");
             if (ab != "")
@@ -425,6 +462,7 @@ namespace Nebo.Mobi.Bot
                     ab = ab.Substring(27);
                     if(ab.IndexOf('\"') != -1) ab = ab.Remove(ab.IndexOf('\"'));
                     lift_count++;
+                    Lift_Count++;
                 }
             }
             return ab;
@@ -462,7 +500,7 @@ namespace Nebo.Mobi.Bot
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Доставлено пассажиров: {1}.\n", GetTime(), lift_count);
             }
-            Thread.Sleep(rnd.Next(1000, 1500));
+            Thread.Sleep(rnd.Next(1001, 1500));
         }
 
         //проверка есть ли выручка
@@ -480,14 +518,7 @@ namespace Nebo.Mobi.Bot
         //переход поссылке сбора выручки и получения новой ссылки сбора выручки
         private string GetMoneyLink(string lnk)
         {
-            try
-            {
-                ClickLink(lnk, "");
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
+            ClickLink(lnk, "");
 
             string ab = Parse(HTML, "Собрать выручку!");
             if (ab != "")
@@ -495,6 +526,7 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Substring(114);
                 ab = ab.Remove(ab.IndexOf('\"'));
                 coins_count++;
+                Coins_Count++;
             }            
             return ab;
         }
@@ -520,7 +552,7 @@ namespace Nebo.Mobi.Bot
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Этажей, с которых собрана выручка: {1}.\n", GetTime(), coins_count);
             }
-            Thread.Sleep(rnd.Next(1000, 1500));
+            Thread.Sleep(rnd.Next(1001, 1500));
         }
 
         //проверяем есть ли чего выложить
@@ -538,14 +570,7 @@ namespace Nebo.Mobi.Bot
         //переход поссылке сбора выручки и получения новой ссылки сбора выручки
         private string GetMerchLink(string lnk)
         {
-            try
-            {
-                ClickLink(lnk, "");
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
+            ClickLink(lnk, "");
 
             string ab = Parse(HTML, "Выложить товар");
             if (ab != "")
@@ -553,6 +578,7 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Substring(117);
                 ab = ab.Remove(ab.IndexOf('\"'));
                 merch_count++;
+                Merch_Count++;
             }
             return ab;
         }
@@ -576,7 +602,7 @@ namespace Nebo.Mobi.Bot
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Этажей, на которых выложен товар: {1}.\n", GetTime(), merch_count);
             }
-            Thread.Sleep(rnd.Next(1000, 1500));
+            Thread.Sleep(rnd.Next(1001, 1500));
         }
 
 
@@ -626,14 +652,7 @@ namespace Nebo.Mobi.Bot
         //переход поссылке сбора выручки и получения новой ссылки сбора выручки
         private string GetBuyLink(string lnk)
         {
-            try
-            {
-                ClickLink(lnk, "");
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
+            ClickLink(lnk, "");
 
             string[] str = HTML.Split((char)'\n');
             string ab = "";
@@ -649,14 +668,8 @@ namespace Nebo.Mobi.Bot
 
             //сама закупка
             Thread.Sleep(rnd.Next(100, 300));
-            try
-            {
-                ClickLink(ab, "");
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
+            
+            ClickLink(ab, "");
 
             ab = TryBuy(); 
             return ab;
@@ -675,6 +688,7 @@ namespace Nebo.Mobi.Bot
                 {
                     ab = GetBuyLink(ab);
                     buy_count++;
+                    Buy_Count++;
                     Thread.Sleep(rnd.Next(100, 300));
                 }
 
@@ -730,14 +744,7 @@ namespace Nebo.Mobi.Bot
             }
 
             //идем в Гостиницу
-            try
-            {
-                ClickLink(ab, "");
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
+            ClickLink(ab, "");
         }
 
         //увольняем жильцов ниже заданного уровня
@@ -788,7 +795,6 @@ namespace Nebo.Mobi.Bot
 
                         try
                         {
-
                             free = Convert.ToInt32(ss);
                         }
                         catch (Exception ex)
@@ -803,6 +809,7 @@ namespace Nebo.Mobi.Bot
                             i = 0;
                             bak_i = 0;
                             new_worker_count++;
+                            New_Worker_Count++;
                         }
                         //иначе - со строки (+) - т.е. со следующего парня
                         else i = bak_i;
@@ -821,7 +828,7 @@ namespace Nebo.Mobi.Bot
                         //защита от дурака
                         try
                         {
-                            level = Convert.ToInt32(tbRank.Text);
+                            level = Convert.ToInt32(tbFireLess.Text);
                         }
                         catch
                         {
@@ -838,8 +845,8 @@ namespace Nebo.Mobi.Bot
                         rank = rank.Remove(1);
                         int l = Convert.ToInt32(rank);
 
-                        //если уровень меньше заданного и стоит галочка выселения
-                        if (l < level && cbFire.Checked)
+                        //если уровень меньше заданного и стоит галочка выселения, или если он 9 и стоит галочка выселения (-)
+                        if (l < level && cbFire.Checked || level == 9 && cbFire9.Checked && str[i + 7].Contains("(-)"))
                         {
                             Kill(ab);
                             //а теперь результаты надо сбросить
@@ -861,14 +868,8 @@ namespace Nebo.Mobi.Bot
         private void Kill(string ab)
         {
             //входим в чувака
-            try
-            {
-                ClickLink(ab, "");
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
+            ClickLink(ab, "");
+
             Thread.Sleep(rnd.Next(100, 500));
 
             //ищем кнопку "Выселить"
@@ -883,16 +884,12 @@ namespace Nebo.Mobi.Bot
                     ab = ab.Remove(ab.IndexOf('\"'));
 
                     //пытаемся выкинуть нах
-                    try
-                    {
-                        ClickLink(ab, "");
-                        HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        killed_count++;
-                    }
-                    catch (Exception ex)
-                    {
-                        ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                    }
+                    ClickLink(ab, "");
+                    
+                    HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    killed_count++;
+                    Killed_Count++;
+                    
                     Thread.Sleep(rnd.Next(100, 500));
                     break;
                 }
@@ -904,16 +901,10 @@ namespace Nebo.Mobi.Bot
         private bool GoToWork(string ab, int free)
         {
             string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
             //входим в чувака
-            try
-            {
-                ClickLink(ab, "");
-                
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
+            ClickLink(ab, "");
+
             Thread.Sleep(rnd.Next(100, 300));
 
             ab = Parse(HTML, "Найти работу");
@@ -922,15 +913,8 @@ namespace Nebo.Mobi.Bot
             
 
             //жмакаем на "Найти работу"
-            try
-            {
-                ClickLink(ab, "");
+            ClickLink(ab, "");
 
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
             Thread.Sleep(rnd.Next(100, 300));
 
             //а вдруг есть пустота
@@ -940,15 +924,8 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Remove(ab.IndexOf('\"'));
 
                 //жмакаем на "устроить на работу"
-                try
-                {
-                    ClickLink(ab, "");
+                ClickLink(ab, "");
 
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                }
                 Thread.Sleep(rnd.Next(100, 300));
 
                 return true;
@@ -973,15 +950,8 @@ namespace Nebo.Mobi.Bot
                 }
 
                 //жмакаем на этаж
-                try
-                {
-                    ClickLink(ab, "");
+                ClickLink(ab, "");
 
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                }
                 Thread.Sleep(rnd.Next(100, 300));
 
                 //разбиваем страницу на строки
@@ -1001,15 +971,8 @@ namespace Nebo.Mobi.Bot
                 }
 
                 //жмакаем на худшего работника
-                try
-                {
-                    ClickLink(ab, "");
+                ClickLink(ab, "");
 
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                }
                 Thread.Sleep(rnd.Next(100, 300));
 
 
@@ -1019,15 +982,8 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Remove(ab.IndexOf('\"'));
 
                 //жмакаем на "Уволить"
-                try
-                {
-                    ClickLink(ab, "");
+                ClickLink(ab, "");
 
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                }
                 Thread.Sleep(rnd.Next(100, 300));
 
 
@@ -1047,15 +1003,8 @@ namespace Nebo.Mobi.Bot
 
 
                 //возвращаемся на этаж
-                try
-                {
-                    ClickLink(ab, "");
+                ClickLink(ab, "");
 
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                }
                 Thread.Sleep(rnd.Next(100, 300));
 
 
@@ -1074,15 +1023,8 @@ namespace Nebo.Mobi.Bot
 
 
                 //нажимием на "найти"
-                try
-                {
-                    ClickLink(ab, "");
+                ClickLink(ab, "");
 
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                }
                 Thread.Sleep(rnd.Next(100, 300));
 
 
@@ -1101,15 +1043,8 @@ namespace Nebo.Mobi.Bot
 
 
                 //и, наконец, нажимием на "принять на работу"
-                try
-                {
-                    ClickLink(ab, "");
+                ClickLink(ab, "");
 
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                }
                 Thread.Sleep(rnd.Next(100, 300));
 
                 //после всех манипуляций надо вернуться в Гостиницу
@@ -1123,6 +1058,48 @@ namespace Nebo.Mobi.Bot
         }
 
 
+
+
+
+
+        //метод приглашения в город
+        private void InviteToCity()
+        {
+            GetHomePage();
+
+            //ссылка в Город
+            string ab = "";
+            ab = Parse(HTML, "Мой город");
+            if (ab != "")
+            {
+                ab = ab.Substring(45);
+                ab = ab.Remove(ab.IndexOf('\"'));
+            }
+
+            //идем в Город
+            ClickLink(ab, "");
+
+            //ищем ссылку "поиск игроков"
+            ab = Parse(HTML, "поиск игроков");
+            if (ab != "")
+            {
+                ab = ab.Substring(44);
+                ab = ab.Remove(ab.IndexOf('\"'));
+            }
+
+            //идем к бомжам
+            ClickLink(ab, "");
+
+            ///
+            ///до сюда фурычит
+            ///
+            COMMUTATION_STR += HTML + '\n';
+            Thread.Sleep(1000);
+            ThreadAbort("ОТЛАДКА.\n");
+        }
+        
+
+
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             try
@@ -1134,8 +1111,61 @@ namespace Nebo.Mobi.Bot
 
         private void cbFire_CheckedChanged(object sender, EventArgs e)
         {
-            if (cbFire.Checked) tbRank.Enabled = true;
-            else tbRank.Enabled = false;
+            if (cbFire.Checked) tbFireLess.Enabled = true;
+            else tbFireLess.Enabled = false;
+        }
+
+
+        //метод для перерисовки окна при изменении размера
+        private void Form1_Resize(object sender, EventArgs e)
+        {
+            lCopyright.Location = new Point(this.Size.Width - (int)(1.1 * lCopyright.Size.Width), this.Size.Height - 5 * lCopyright.Size.Height);
+            LOGBox.Size = new Size(this.Size.Width - 3 * LOGBox.Location.X, this.Size.Height - LOGBox.Location.Y - 6 * lCopyright.Size.Height);
+        }
+
+        //показ статистики работы бота в трее по клику
+        private void TrayIcon_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+                {
+                    if (this.Visible == true)
+                        this.Hide();
+                    else this.Show();
+                }
+
+            else if (e.Button == System.Windows.Forms.MouseButtons.Left)
+            {
+                TrayIcon.BalloonTipTitle = "Nebo.Mobi.Bot ver. " + Version.Parse(version);
+                TrayIcon.BalloonTipText = string.Format(@"Всего прогонов: {0}
+
+Доставлено пассажиров: {1}
+Этажей, с которых собрана выручка: {2}
+Этажей, на которых выложен товар: {3}
+Этажей, на которых закуплен товар: {4}
+Выселено дармоедов: {5}
+Нанято новых рабочих: {6}", Action_Count, Lift_Count, Coins_Count, Merch_Count, Buy_Count, Killed_Count, New_Worker_Count);
+                TrayIcon.ShowBalloonTip(1000);
+            }
+        }
+
+        //сохранить настройки
+        private void bSave_Click(object sender, EventArgs e)
+        {
+            SaveConfig();
+        }
+
+        private void tbPass_TextChanged(object sender, EventArgs e)
+        {
+            PassChanged = true;
+        }
+
+        private void tbPass_Leave(object sender, EventArgs e)
+        {
+            if (PassChanged)
+            {
+                tbPass.Text = Crypto.EncryptStr(tbPass.Text);
+                PassChanged = false;
+            }
         }
     }
 }
