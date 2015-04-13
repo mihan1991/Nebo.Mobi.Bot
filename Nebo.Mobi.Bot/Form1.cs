@@ -14,19 +14,22 @@ namespace Nebo.Mobi.Bot
 {
     public partial class Form1 : Form
     {
-        private string version = "1.7";                         //версия бота
+        private string version = "1.8";                         //версия бота
 
         //блок разовой статистики
         private int lift_count;                                 //счетчик перевезенных в лифте
         private int buy_count;                                  //счетчик купленных товаров
         private int coins_count;                                //счетчик собранных выручек (точнее этажей)
-        //private int bucks_count;                                //счетчик полученных баксов (пока только чаевые)
+        private int bucks_count;                                //счетчик полученных баксов (пока только чаевые)
         private int merch_count;                                //счетчик выложенных товаров (точнее этажей)
         private int killed_count;                               //счетчик выселенных 
         private int new_worker_count;                           //счетчик новых нанятых
 
         //блок общей статистики работы (отображается по клику в трее)
+        private string Level;
+        private string Ballance;
         private int Lift_Count;
+        private int Bucks_Count;        
         private int Buy_Count;
         private int Coins_Count;
         private int Merch_Count;
@@ -100,7 +103,7 @@ namespace Nebo.Mobi.Bot
 
             lLOG.Location = new Point(lLogin.Location.X, bStart.Location.Y + bStart.Size.Height*2);
 
-            lCopyright.Text = "Exclusive by Mr.President  ©  2014 - 2015." + "  ver. " + Version.Parse(version);
+            lCopyright.Text = "Exclusive by Mr.President  ©  2014 - 2015." + "  ver. " + version;
             lCopyright.Location = new Point(this.Size.Width - (int)(1.1*lCopyright.Size.Width), this.Size.Height - 5 * lCopyright.Size.Height);
 
             LOGBox.Location = new Point(lLogin.Location.X, lLOG.Location.Y + lLOG.Size.Height + (int)(0.01 * this.Size.Height));
@@ -124,7 +127,8 @@ namespace Nebo.Mobi.Bot
             PassChanged = false;
 
             //обнуление общей статистики
-            Lift_Count = Buy_Count = Coins_Count = Merch_Count = Killed_Count = New_Worker_Count = Action_Count = 0;
+            Level = Ballance = "";
+            Lift_Count = Buy_Count = Coins_Count = Merch_Count = Killed_Count = New_Worker_Count = Action_Count = Bucks_Count = 0;
         }
 
         //подгружаем настройки
@@ -188,7 +192,36 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Remove(ab.IndexOf("\""));
 
                 ClickLink(ab, "");
+            }
+        }
 
+        //получаем уровень и финансы
+        private void GetInfo()
+        {
+            Ballance = "";
+            Level = "";
+            GetHomePage();
+            string ab = Parse(HTML, "mn_iron.png");
+            if (ab != "")
+            {
+                ab = ab.Substring(122);
+                ab = ab.Remove(ab.IndexOf('<'));
+                Ballance += "Монет: " + ab.Replace("&#039;",".");
+            }
+            ab = Parse(HTML, "mn_gold.png");
+            if (ab != "")
+            {
+                ab = ab.Substring(122);
+                ab = ab.Remove(ab.IndexOf('<'));
+                Ballance += "  Баксов: " + ab;
+            }
+
+            ab = Parse(HTML, "уровень");
+            if (ab != "")
+            {
+                ab = ab.Substring(106);
+                ab = ab.Remove(ab.IndexOf('<'));
+                Level += ab + " уровень. ";
             }
         }
 
@@ -229,6 +262,7 @@ namespace Nebo.Mobi.Bot
             bStart.Enabled = false;
             bStop.Enabled = true;
             Bot = new Thread(StartBot);
+            if (bot_timer.Enabled) bot_timer.Enabled = false;
             ref_timer.Start();
             Bot.Start();
         }
@@ -241,13 +275,22 @@ namespace Nebo.Mobi.Bot
             //подключаеся, идем на главную, раскрываем этажи
             GoHome();
 
+            GetInfo(); //получаем инфу до прогона
             //делаем 2 прогона (мб что-то доставят или купят випы)
             for (int i = 0; i < 2; i++)
             {
+                GetReavrd();
                 FindWorkers();
+                GetReavrd();
                 CollectMoney();
-                if(!cbDoNotPut.Checked) PutMerch();
+                GetReavrd();
+                if (!cbDoNotPut.Checked)
+                {
+                    PutMerch();
+                    GetReavrd();
+                }
                 Buy();
+                GetReavrd();
                 GoneLift();
 
 
@@ -258,6 +301,7 @@ namespace Nebo.Mobi.Bot
                 ///
             }
             Action_Count++; //считаем оба прогона за 1
+            GetInfo();      //получем инфу после прогона
 
             RelaxMan();
         }
@@ -316,6 +360,7 @@ namespace Nebo.Mobi.Bot
             {
                 ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
+            if (HTML.Contains("502 Bad Gateway")) GetHomePage();
         }
 
         //подключение к серверу
@@ -461,8 +506,17 @@ namespace Nebo.Mobi.Bot
                 {
                     ab = ab.Substring(27);
                     if(ab.IndexOf('\"') != -1) ab = ab.Remove(ab.IndexOf('\"'));
+
+                    //считаем пассажира
                     lift_count++;
                     Lift_Count++;
+
+                    //если дал бакс - считаем
+                    if (HTML.Contains("static.nebo.mobi/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>1</span></b>"))
+                    {
+                        bucks_count++;
+                        Bucks_Count++;
+                    }
                 }
             }
             return ab;
@@ -480,6 +534,63 @@ namespace Nebo.Mobi.Bot
             Bot.Start();
         }
 
+        //основной метод получения награды (баксов)
+        private void GetReavrd()
+        {
+            //получаем ссылку на квесты и кликаем если есть награда
+            string ab = TryRevard();
+            if (ab != "")
+            {
+                ACTION_STATUS = "   -   Собираю награду";
+                ClickLink(ab, "");
+                Thread.Sleep(rnd.Next(300, 500));
+
+                bucks_count = 0;
+
+                //пока есть кнопки "Получить награду!" - жмакаем
+                string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                int i;
+                for (i = 0; i < str.Length; i++)
+                {
+                    if (str[i].Contains("Получить награду!"))
+                    {
+                        //фиксируем строчку со ссылкой на получение
+                        ab = str[i];
+
+                        //считаем награду
+                        string stat = str[i-3];
+                        if(stat.Contains("Бонус X2!"))
+                            stat = str[i-6];
+                        stat = stat.Substring("static.nebo.mobi/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>".Length + "<span><img src=\"http://".Length);
+                        stat = stat.Remove(stat.IndexOf('<'));
+                        bucks_count += Convert.ToInt32(stat);
+                        
+                        //получаем ссылку, кликаем и ждем
+                        ab = ab.Substring("<div><a class=\"btng btn60\" href=\"".Length);
+                        ab = ab.Remove(ab.IndexOf('\"'));
+                        ClickLink(ab, "");
+                        Thread.Sleep(rnd.Next(500, 800));
+                    }
+                }                
+                Bucks_Count += bucks_count;
+                ACTION_STATUS = "";
+                COMMUTATION_STR = string.Format("{0}  -  Собрано наградных баксов: {1}.\n", GetTime(), bucks_count);
+
+                GetHomePage();
+            }
+        }
+
+        //проверка- есть ли награда
+        private string TryRevard()
+        {
+            string ab = Parse(HTML, "tb_quests.png");
+            if (ab != "")
+            {
+                ab = ab.Substring(27);
+                ab = ab.Remove(ab.IndexOf('\"'));
+            }
+            return ab;
+        }
 
         //основной метод отправки лифта
         private void GoneLift()
@@ -488,6 +599,7 @@ namespace Nebo.Mobi.Bot
             string ab = TryLift();
 
             lift_count = 0;
+            bucks_count = 0;
             if (ab != "")
             {
                 ACTION_STATUS = "   -   Катаю лифт";
@@ -499,6 +611,7 @@ namespace Nebo.Mobi.Bot
                 }
                 ACTION_STATUS = "";
                 COMMUTATION_STR = string.Format("{0}  -  Доставлено пассажиров: {1}.\n", GetTime(), lift_count);
+                if (bucks_count != 0) COMMUTATION_STR += string.Format("{0}  -  Собрано чаевых баксов: {1}.\n", GetTime(), bucks_count);
             }
             Thread.Sleep(rnd.Next(1001, 1500));
         }
@@ -543,6 +656,7 @@ namespace Nebo.Mobi.Bot
             {
                 ACTION_STATUS = "   -   Собираю выручку";
                 coins_count = 1;
+                Coins_Count++;
                 while (ab != "")
                 {
                     ab = GetMoneyLink(ab);
@@ -593,6 +707,7 @@ namespace Nebo.Mobi.Bot
             {
                 ACTION_STATUS = "   -   Выкладываю товар";
                 merch_count = 1;
+                Merch_Count++;
                 while (ab != "")
                 {
                     ab = GetMerchLink(ab);
@@ -1135,15 +1250,18 @@ namespace Nebo.Mobi.Bot
 
             else if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                TrayIcon.BalloonTipTitle = "Nebo.Mobi.Bot ver. " + Version.Parse(version);
-                TrayIcon.BalloonTipText = string.Format(@"Всего прогонов: {0}
+                TrayIcon.BalloonTipTitle = "Nebo.Mobi.Bot ver. " + version;
+                TrayIcon.BalloonTipText = string.Format(@"{0}
 
-Доставлено пассажиров: {1}
-Этажей, с которых собрана выручка: {2}
-Этажей, на которых выложен товар: {3}
-Этажей, на которых закуплен товар: {4}
-Выселено дармоедов: {5}
-Нанято новых рабочих: {6}", Action_Count, Lift_Count, Coins_Count, Merch_Count, Buy_Count, Killed_Count, New_Worker_Count);
+Всего прогонов: {1}
+
+Доставлено пассажиров: {2}
+Собрано баксов: {3}
+Этажей, с которых собрана выручка: {4}
+Этажей, на которых выложен товар: {5}
+Этажей, на которых закуплен товар: {6}
+Выселено дармоедов: {7}
+Нанято новых рабочих: {8}", tbLogin.Text+": " + Level +"\n" + Ballance, Action_Count, Lift_Count, Bucks_Count, Coins_Count, Merch_Count, Buy_Count, Killed_Count, New_Worker_Count);
                 TrayIcon.ShowBalloonTip(1000);
             }
         }
@@ -1154,11 +1272,13 @@ namespace Nebo.Mobi.Bot
             SaveConfig();
         }
 
+        //событие изменения поля "Пароль"
         private void tbPass_TextChanged(object sender, EventArgs e)
         {
             PassChanged = true;
         }
 
+        //событие выхода курсора из поля "Пароль"
         private void tbPass_Leave(object sender, EventArgs e)
         {
             if (PassChanged)
