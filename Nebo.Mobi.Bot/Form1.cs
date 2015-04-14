@@ -24,10 +24,13 @@ namespace Nebo.Mobi.Bot
         private int merch_count;                                //счетчик выложенных товаров (точнее этажей)
         private int killed_count;                               //счетчик выселенных 
         private int new_worker_count;                           //счетчик новых нанятых
+        
+        //блок данных пользователя
+        private string User_Level;
+        private string User_Bucks;
+        private string User_Coins;
 
-        //блок общей статистики работы (отображается по клику в трее)
-        private string Level;
-        private string Ballance;
+        //блок общей статистики работы
         private int Lift_Count;
         private int Bucks_Count;        
         private int Buy_Count;
@@ -104,10 +107,24 @@ namespace Nebo.Mobi.Bot
             lLOG.Location = new Point(lLogin.Location.X, bStart.Location.Y + bStart.Size.Height*2);
 
             lCopyright.Text = "Exclusive by Mr.President  ©  2014 - 2015." + "  ver. " + version;
+            TrayIcon.Text = "Nebo.Mobi.Bot ver. " + version;
             lCopyright.Location = new Point(this.Size.Width - (int)(1.1*lCopyright.Size.Width), this.Size.Height - 5 * lCopyright.Size.Height);
 
             LOGBox.Location = new Point(lLogin.Location.X, lLOG.Location.Y + lLOG.Size.Height + (int)(0.01 * this.Size.Height));
             LOGBox.Size = new Size(this.Size.Width - 3 * LOGBox.Location.X, this.Size.Height - LOGBox.Location.Y - 6 * lCopyright.Size.Height);
+
+            gbStats.Location = new Point(LOGBox.Location.X, lCopyright.Location.Y - 10);
+            pbCoin.Size = new Size(16, 16);
+            pbCoin.Location = new Point(10, 12);
+            lCoin.Location = new Point(pbCoin.Location.X + pbCoin.Size.Width, pbCoin.Location.Y + 2);
+            pbGold.Size = new Size(16, 16);
+            pbGold.Location = new Point(120, 12);
+            lGold.Location = new Point(pbGold.Location.X + pbGold.Size.Width, pbGold.Location.Y + 2);
+            pbLevel.Size = new Size(16, 16);
+            pbLevel.Location = new Point(180, 12);
+            lLevel.Location = new Point(pbLevel.Location.X + pbLevel.Size.Width, pbLevel.Location.Y + 2);
+            gbStats.Size = new Size(lLevel.Location.X + 70, 32);
+            gbStats.Visible = true;
             
             this.MinimumSize = new System.Drawing.Size(tbFireLess.Location.X + tbFireLess.Size.Width*2, (int)(0.5*Screen.PrimaryScreen.Bounds.Height));
 
@@ -127,7 +144,7 @@ namespace Nebo.Mobi.Bot
             PassChanged = false;
 
             //обнуление общей статистики
-            Level = Ballance = "";
+            User_Bucks = User_Coins = User_Level = "";
             Lift_Count = Buy_Count = Coins_Count = Merch_Count = Killed_Count = New_Worker_Count = Action_Count = Bucks_Count = 0;
         }
 
@@ -198,22 +215,23 @@ namespace Nebo.Mobi.Bot
         //получаем уровень и финансы
         private void GetInfo()
         {
-            Ballance = "";
-            Level = "";
+            User_Bucks = User_Coins = User_Level = "";
             GetHomePage();
+
             string ab = Parse(HTML, "mn_iron.png");
             if (ab != "")
             {
                 ab = ab.Substring(122);
                 ab = ab.Remove(ab.IndexOf('<'));
-                Ballance += "Монет: " + ab.Replace("&#039;",".");
+                User_Coins = ab.Replace("&#039;", "'");
             }
+
             ab = Parse(HTML, "mn_gold.png");
             if (ab != "")
             {
                 ab = ab.Substring(122);
                 ab = ab.Remove(ab.IndexOf('<'));
-                Ballance += "  Баксов: " + ab;
+                User_Bucks = ab.Replace("&#039;", "'");
             }
 
             ab = Parse(HTML, "уровень");
@@ -221,8 +239,9 @@ namespace Nebo.Mobi.Bot
             {
                 ab = ab.Substring(106);
                 ab = ab.Remove(ab.IndexOf('<'));
-                Level += ab + " уровень. ";
-            }
+                User_Level = ab + " уровень";
+            }            
+            TrayIcon.Text = tbLogin.Text + ": " + User_Level + ". Монет: " + User_Coins + " Баксов: " + User_Bucks;
         }
 
         //обновление содержания формы
@@ -252,7 +271,9 @@ namespace Nebo.Mobi.Bot
                 CONNECT_STATUS = string.Format("   Жду   {0}мин : {1:d2}сек\n\n", (int)(timeleft / 60), timeleft - ((int)(timeleft / 60) * 60));
                 timeleft--;
             }
-             
+            lCoin.Text = User_Coins;
+            lGold.Text = User_Bucks;
+            lLevel.Text = User_Level;
         }
 
 
@@ -275,7 +296,7 @@ namespace Nebo.Mobi.Bot
             //подключаеся, идем на главную, раскрываем этажи
             GoHome();
 
-            GetInfo(); //получаем инфу до прогона
+            if(User_Coins =="") GetInfo(); //получаем инфу до прогона
             //делаем 2 прогона (мб что-то доставят или купят випы)
             for (int i = 0; i < 2; i++)
             {
@@ -829,7 +850,9 @@ namespace Nebo.Mobi.Bot
             ref_timer.Stop();
             bStart.Enabled = true;
             bStop.Enabled = false;
-            timeleft = 0; 
+            timeleft = 0;
+            User_Level = User_Coins = User_Bucks = "";
+            TrayIcon.Text = "Nebo.Mobi.Bot ver. " + version;
             UpdForm();
         }
 
@@ -1236,6 +1259,7 @@ namespace Nebo.Mobi.Bot
         {
             lCopyright.Location = new Point(this.Size.Width - (int)(1.1 * lCopyright.Size.Width), this.Size.Height - 5 * lCopyright.Size.Height);
             LOGBox.Size = new Size(this.Size.Width - 3 * LOGBox.Location.X, this.Size.Height - LOGBox.Location.Y - 6 * lCopyright.Size.Height);
+            gbStats.Location = new Point(LOGBox.Location.X, lCopyright.Location.Y - 10);
         }
 
         //показ статистики работы бота в трее по клику
@@ -1250,18 +1274,16 @@ namespace Nebo.Mobi.Bot
 
             else if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                TrayIcon.BalloonTipTitle = "Nebo.Mobi.Bot ver. " + version;
-                TrayIcon.BalloonTipText = string.Format(@"{0}
+                TrayIcon.BalloonTipTitle = tbLogin.Text + ": " + User_Level;
+                TrayIcon.BalloonTipText = string.Format(@"Всего прогонов: {0}
 
-Всего прогонов: {1}
-
-Доставлено пассажиров: {2}
-Собрано баксов: {3}
-Этажей, с которых собрана выручка: {4}
-Этажей, на которых выложен товар: {5}
-Этажей, на которых закуплен товар: {6}
-Выселено дармоедов: {7}
-Нанято новых рабочих: {8}", tbLogin.Text+": " + Level +"\n" + Ballance, Action_Count, Lift_Count, Bucks_Count, Coins_Count, Merch_Count, Buy_Count, Killed_Count, New_Worker_Count);
+Доставлено пассажиров: {1}
+Собрано баксов: {2}
+Этажей, с которых собрана выручка: {3}
+Этажей, на которых выложен товар: {4}
+Этажей, на которых закуплен товар: {5}
+Выселено дармоедов: {6}
+Нанято новых рабочих: {7}", Action_Count, Lift_Count, Bucks_Count, Coins_Count, Merch_Count, Buy_Count, Killed_Count, New_Worker_Count);
                 TrayIcon.ShowBalloonTip(1000);
             }
         }

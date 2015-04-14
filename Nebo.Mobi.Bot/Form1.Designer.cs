@@ -53,6 +53,17 @@
             this.TrayIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.cbDoNotSaveThePass = new System.Windows.Forms.CheckBox();
             this.bSave = new System.Windows.Forms.Button();
+            this.gbStats = new System.Windows.Forms.GroupBox();
+            this.lLevel = new System.Windows.Forms.Label();
+            this.lGold = new System.Windows.Forms.Label();
+            this.lCoin = new System.Windows.Forms.Label();
+            this.pbLevel = new System.Windows.Forms.PictureBox();
+            this.pbGold = new System.Windows.Forms.PictureBox();
+            this.pbCoin = new System.Windows.Forms.PictureBox();
+            this.gbStats.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbLevel)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbGold)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbCoin)).BeginInit();
             this.SuspendLayout();
             // 
             // LOGBox
@@ -271,11 +282,79 @@
             this.bSave.UseVisualStyleBackColor = true;
             this.bSave.Click += new System.EventHandler(this.bSave_Click);
             // 
+            // gbStats
+            // 
+            this.gbStats.Controls.Add(this.lLevel);
+            this.gbStats.Controls.Add(this.lGold);
+            this.gbStats.Controls.Add(this.lCoin);
+            this.gbStats.Controls.Add(this.pbLevel);
+            this.gbStats.Controls.Add(this.pbGold);
+            this.gbStats.Controls.Add(this.pbCoin);
+            this.gbStats.Location = new System.Drawing.Point(19, 521);
+            this.gbStats.Name = "gbStats";
+            this.gbStats.Size = new System.Drawing.Size(271, 82);
+            this.gbStats.TabIndex = 12;
+            this.gbStats.TabStop = false;
+            this.gbStats.Text = "О персонаже";
+            this.gbStats.Visible = false;
+            // 
+            // lLevel
+            // 
+            this.lLevel.AutoSize = true;
+            this.lLevel.Location = new System.Drawing.Point(135, 49);
+            this.lLevel.Name = "lLevel";
+            this.lLevel.Size = new System.Drawing.Size(0, 13);
+            this.lLevel.TabIndex = 13;
+            // 
+            // lGold
+            // 
+            this.lGold.AutoSize = true;
+            this.lGold.Location = new System.Drawing.Point(69, 49);
+            this.lGold.Name = "lGold";
+            this.lGold.Size = new System.Drawing.Size(0, 13);
+            this.lGold.TabIndex = 13;
+            // 
+            // lCoin
+            // 
+            this.lCoin.AutoSize = true;
+            this.lCoin.Location = new System.Drawing.Point(6, 49);
+            this.lCoin.Name = "lCoin";
+            this.lCoin.Size = new System.Drawing.Size(0, 13);
+            this.lCoin.TabIndex = 13;
+            // 
+            // pbLevel
+            // 
+            this.pbLevel.Image = ((System.Drawing.Image)(resources.GetObject("pbLevel.Image")));
+            this.pbLevel.Location = new System.Drawing.Point(138, 20);
+            this.pbLevel.Name = "pbLevel";
+            this.pbLevel.Size = new System.Drawing.Size(34, 26);
+            this.pbLevel.TabIndex = 0;
+            this.pbLevel.TabStop = false;
+            // 
+            // pbGold
+            // 
+            this.pbGold.Image = ((System.Drawing.Image)(resources.GetObject("pbGold.Image")));
+            this.pbGold.Location = new System.Drawing.Point(70, 20);
+            this.pbGold.Name = "pbGold";
+            this.pbGold.Size = new System.Drawing.Size(34, 26);
+            this.pbGold.TabIndex = 0;
+            this.pbGold.TabStop = false;
+            // 
+            // pbCoin
+            // 
+            this.pbCoin.Image = ((System.Drawing.Image)(resources.GetObject("pbCoin.Image")));
+            this.pbCoin.Location = new System.Drawing.Point(7, 20);
+            this.pbCoin.Name = "pbCoin";
+            this.pbCoin.Size = new System.Drawing.Size(34, 26);
+            this.pbCoin.TabIndex = 0;
+            this.pbCoin.TabStop = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1244, 557);
+            this.ClientSize = new System.Drawing.Size(1244, 615);
+            this.Controls.Add(this.gbStats);
             this.Controls.Add(this.cbDoNotSaveThePass);
             this.Controls.Add(this.cbFire9);
             this.Controls.Add(this.cbFire);
@@ -303,6 +382,11 @@
             this.Text = "Небоскребы. Бот";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.Resize += new System.EventHandler(this.Form1_Resize);
+            this.gbStats.ResumeLayout(false);
+            this.gbStats.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbLevel)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbGold)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbCoin)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -333,6 +417,13 @@
         private System.Windows.Forms.NotifyIcon TrayIcon;
         private System.Windows.Forms.CheckBox cbDoNotSaveThePass;
         private System.Windows.Forms.Button bSave;
+        private System.Windows.Forms.GroupBox gbStats;
+        private System.Windows.Forms.Label lLevel;
+        private System.Windows.Forms.Label lGold;
+        private System.Windows.Forms.Label lCoin;
+        private System.Windows.Forms.PictureBox pbLevel;
+        private System.Windows.Forms.PictureBox pbGold;
+        private System.Windows.Forms.PictureBox pbCoin;
     }
 }
 
