@@ -14,7 +14,7 @@ namespace Nebo.Mobi.Bot
 {
     public partial class Form1 : Form
     {
-        private string version = "1.8";                         //версия бота
+        private string version = "1.9";                         //версия бота
 
         //блок разовой статистики
         private int lift_count;                                 //счетчик перевезенных в лифте
@@ -62,13 +62,24 @@ namespace Nebo.Mobi.Bot
         private bool PassChanged;                               //проверка на изменение пароля (нужно для шифрования)
         private WebClient webClient;
 
+        private string Current_Path;                            //строка, содержащая папку с ботом
+        private bool AutorunChanged;                            //для фиксации изменения состояния автозагрузки
+
         public Form1()
         {
             InitializeComponent();
 
+            AutorunChanged = false;
+
+            //получаем директорию файла
+            Current_Path = new FileInfo(Application.ExecutablePath).Name;
+            int pos = Application.ExecutablePath.IndexOf(Current_Path);
+            Current_Path = Application.ExecutablePath.Remove(pos, Current_Path.Length);
+
             //подгружаем настройки
-            cfg = new Config();
+            cfg = new Config(Current_Path);
             LoadConfig();
+            bSave.BackColor = Color.LightGreen;
 
             //отрисовываем форму
             this.Size = new Size((int)(0.5 * Screen.PrimaryScreen.Bounds.Width), (int)(0.5 * Screen.PrimaryScreen.Bounds.Height));
@@ -89,8 +100,11 @@ namespace Nebo.Mobi.Bot
             tbMinTime.Size = new Size((int)(0.05 * this.Size.Width), tbMinTime.Size.Height);
 
             cbDoNotPut.Location = new Point(lDiapazon.Location.X + lDiapazon.Size.Width + (int)(0.01 * this.Size.Width), tbMinTime.Location.Y);
+            cbDoNotGetRevard.Location = new Point(cbDoNotPut.Location.X + cbDoNotPut.Size.Width + (int)(0.01 * this.Size.Width), cbDoNotPut.Location.Y);
             cbFire.Location = new Point(cbDoNotPut.Location.X, cbDoNotPut.Location.Y + cbDoNotPut.Size.Height);
             cbFire9.Location = new Point(cbFire.Location.X, cbFire.Location.Y + cbFire.Size.Height);
+            cbAutorun.Location = new Point(cbFire9.Location.X, cbFire9.Location.Y + cbFire9.Size.Height);
+            cbHide.Location = new Point(cbDoNotGetRevard.Location.X, cbAutorun.Location.Y);
             tbFireLess.Location = new Point(cbFire.Location.X + cbFire.Size.Width + (int)(0.01 * cbFire.Size.Width), cbFire.Location.Y-2);
 
             lMaxTime.Location = new Point(lDiapazon.Location.X, lMinTime.Location.Y + lMinTime.Size.Height + (int)(0.02 * this.Size.Height));
@@ -125,8 +139,9 @@ namespace Nebo.Mobi.Bot
             lLevel.Location = new Point(pbLevel.Location.X + pbLevel.Size.Width, pbLevel.Location.Y + 2);
             gbStats.Size = new Size(lLevel.Location.X + 70, 32);
             gbStats.Visible = true;
-            
-            this.MinimumSize = new System.Drawing.Size(tbFireLess.Location.X + tbFireLess.Size.Width*2, (int)(0.5*Screen.PrimaryScreen.Bounds.Height));
+
+            this.MinimumSize = new System.Drawing.Size(cbDoNotGetRevard.Location.X + (int)(cbDoNotGetRevard.Size.Width*1.5), (int)(0.5 * Screen.PrimaryScreen.Bounds.Height));
+            this.Size = this.MinimumSize;
 
             webClient = new WebClient();
 
@@ -146,6 +161,17 @@ namespace Nebo.Mobi.Bot
             //обнуление общей статистики
             User_Bucks = User_Coins = User_Level = "";
             Lift_Count = Buy_Count = Coins_Count = Merch_Count = Killed_Count = New_Worker_Count = Action_Count = Bucks_Count = 0;
+
+            //если выбран автостарт и есть логин с паролем - запуск бота
+            if (cbAutorun.Checked && tbLogin.Text != "" && tbPass.Text != "")
+            {
+                bStart.Enabled = false;
+                bStop.Enabled = true;
+                Bot = new Thread(StartBot);
+                if (bot_timer.Enabled) bot_timer.Enabled = false;
+                ref_timer.Start();
+                Bot.Start();
+            }
         }
 
         //подгружаем настройки
@@ -161,6 +187,29 @@ namespace Nebo.Mobi.Bot
             cbFire.Checked = Convert.ToBoolean(cfg.Fire);
             tbFireLess.Text = cfg.FireLess;
             cbFire9.Checked = Convert.ToBoolean(cfg.Fire9);
+            cbDoNotGetRevard.Checked = Convert.ToBoolean(cfg.DoNotGetRevard);
+            cbHide.Checked = Convert.ToBoolean(cfg.Hide);
+
+            //проверка автостарта
+            //проверка - было ли ручное отключения из автозагрузки
+            Microsoft.Win32.RegistryKey myKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run\", false);
+            if (myKey.GetValue("Nebo.Mobi.Bot_" + tbLogin.Text, "").ToString() == "")
+            {
+                //снимаем галку авторана
+                cbAutorun.Checked = false;
+            }
+
+            //на другой оси сохранили без авторана
+            else
+                cbAutorun.Checked = true;            
+
+            //активировать возможность включения запуска в скрытом виде только если возможен автостарт
+            if (cbAutorun.Checked)
+                cbHide.Enabled = true;
+            else cbHide.Enabled = false;
+
+            if (cbHide.Checked && cbHide.Enabled && tbLogin.Text != "" && tbPass.Text != "")
+                this.WindowState = FormWindowState.Minimized;
         }
 
         private void SaveConfig()
@@ -176,7 +225,43 @@ namespace Nebo.Mobi.Bot
             cfg.Fire = cbFire.Checked.ToString().ToLower();
             cfg.FireLess = tbFireLess.Text;
             cfg.Fire9 = cbFire9.Checked.ToString().ToLower();
+            cfg.DoNotGetRevard = cbDoNotGetRevard.Checked.ToString().ToLower();
+            cfg.Hide = cbHide.Checked.ToString().ToLower();
             cfg.WriteConfig();
+            bSave.BackColor = Color.LightGreen;
+
+            //модификация автозапуска
+            if (AutorunChanged)
+            {
+                if (cbAutorun.Checked)
+                {
+                    Microsoft.Win32.RegistryKey myKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run\", true);
+                    if (tbLogin.Text != "")
+                        myKey.SetValue("Nebo.Mobi.Bot_" + tbLogin.Text, Application.ExecutablePath);
+                    else
+                    {
+                        MessageBox.Show("Невозможно добавить бота в автозагрузку Windows без указания логина.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+                else
+                {
+                    Microsoft.Win32.RegistryKey myKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run\", true);
+                    if (tbLogin.Text != "")
+                        myKey.DeleteValue("Nebo.Mobi.Bot_" + tbLogin.Text, false);
+                    else
+                    {
+                        MessageBox.Show("Невозможно удалить бота из автозагрузки Windows без указания логина.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+                AutorunChanged = false;
+            }
+            else if (cbAutorun.Checked && tbLogin.Text == "")
+            {
+                MessageBox.Show("Невозможно добавить бота в автозагрузку Windows без указания логина.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
         }
 
         //получение полного списка этажей
@@ -300,18 +385,18 @@ namespace Nebo.Mobi.Bot
             //делаем 2 прогона (мб что-то доставят или купят випы)
             for (int i = 0; i < 2; i++)
             {
-                GetReavrd();
+                if(!cbDoNotGetRevard.Checked) GetReavrd();
                 FindWorkers();
-                GetReavrd();
+                if (!cbDoNotGetRevard.Checked) GetReavrd();
                 CollectMoney();
-                GetReavrd();
+                if (!cbDoNotGetRevard.Checked) GetReavrd();
                 if (!cbDoNotPut.Checked)
                 {
                     PutMerch();
-                    GetReavrd();
+                    if (!cbDoNotGetRevard.Checked) GetReavrd();
                 }
                 Buy();
-                GetReavrd();
+                if (!cbDoNotGetRevard.Checked) GetReavrd();
                 GoneLift();
 
 
@@ -1247,6 +1332,7 @@ namespace Nebo.Mobi.Bot
             catch { }
         }
 
+        //обработчик собычия изменения чек-бокса увольнения по уровню
         private void cbFire_CheckedChanged(object sender, EventArgs e)
         {
             if (cbFire.Checked) tbFireLess.Enabled = true;
@@ -1269,7 +1355,12 @@ namespace Nebo.Mobi.Bot
                 {
                     if (this.Visible == true)
                         this.Hide();
-                    else this.Show();
+                    else
+                    {                        
+                        this.Show();
+                        if (this.WindowState == FormWindowState.Minimized)
+                            this.WindowState = FormWindowState.Normal;
+                    }
                 }
 
             else if (e.Button == System.Windows.Forms.MouseButtons.Left)
@@ -1307,7 +1398,52 @@ namespace Nebo.Mobi.Bot
             {
                 tbPass.Text = Crypto.EncryptStr(tbPass.Text);
                 PassChanged = false;
+                bSave.BackColor = Color.Orange;
             }
         }
+
+        //событие по изменению чек-бокса Авторана
+        private void cbAutorun_Click(object sender, EventArgs e)
+        {
+            AutorunChanged = true;
+            //MessageBox.Show("Не забудьте сохранить настройки!", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            bSave.BackColor = Color.Orange;
+            if (cbAutorun.Checked)
+                cbHide.Enabled = true;
+            else cbHide.Enabled = false; 
+        }
+
+        //скрываем окно если стоит галочка
+        private void Form1_Shown(object sender, EventArgs e)
+        {
+            if (cbHide.Checked && cbHide.Enabled && tbLogin.Text != "" && tbPass.Text != "")
+                this.Hide();
+        }
+
+        private void cbDoNotSaveThePass_Click(object sender, EventArgs e)
+        {
+            bSave.BackColor = Color.Orange;
+        }
+
+        private void cbHide_Click(object sender, EventArgs e)
+        {
+            bSave.BackColor = Color.Orange;
+        }
+
+        private void tbLogin_TextChanged(object sender, EventArgs e)
+        {
+            bSave.BackColor = Color.Orange;
+        }
+
+        private void tbMinTime_TextChanged(object sender, EventArgs e)
+        {
+            bSave.BackColor = Color.Orange;
+        }
+
+        private void tbMaxTime_TextChanged(object sender, EventArgs e)
+        {
+            bSave.BackColor = Color.Orange;
+        }
+
     }
 }

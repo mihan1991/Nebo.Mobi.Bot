@@ -60,6 +60,9 @@
             this.pbLevel = new System.Windows.Forms.PictureBox();
             this.pbGold = new System.Windows.Forms.PictureBox();
             this.pbCoin = new System.Windows.Forms.PictureBox();
+            this.cbAutorun = new System.Windows.Forms.CheckBox();
+            this.cbDoNotGetRevard = new System.Windows.Forms.CheckBox();
+            this.cbHide = new System.Windows.Forms.CheckBox();
             this.gbStats.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbLevel)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbGold)).BeginInit();
@@ -98,6 +101,7 @@
             this.tbLogin.Name = "tbLogin";
             this.tbLogin.Size = new System.Drawing.Size(145, 20);
             this.tbLogin.TabIndex = 1;
+            this.tbLogin.TextChanged += new System.EventHandler(this.tbLogin_TextChanged);
             // 
             // tbPass
             // 
@@ -176,6 +180,7 @@
             this.tbMinTime.Size = new System.Drawing.Size(145, 20);
             this.tbMinTime.TabIndex = 5;
             this.tbMinTime.Text = "2";
+            this.tbMinTime.TextChanged += new System.EventHandler(this.tbMinTime_TextChanged);
             // 
             // tbMaxTime
             // 
@@ -184,6 +189,7 @@
             this.tbMaxTime.Size = new System.Drawing.Size(145, 20);
             this.tbMaxTime.TabIndex = 6;
             this.tbMaxTime.Text = "25";
+            this.tbMaxTime.TextChanged += new System.EventHandler(this.tbMaxTime_TextChanged);
             // 
             // lDiapazon
             // 
@@ -271,6 +277,7 @@
             this.cbDoNotSaveThePass.TabIndex = 11;
             this.cbDoNotSaveThePass.Text = "НЕ сохранять пароль";
             this.cbDoNotSaveThePass.UseVisualStyleBackColor = true;
+            this.cbDoNotSaveThePass.Click += new System.EventHandler(this.cbDoNotSaveThePass_Click);
             // 
             // bSave
             // 
@@ -349,15 +356,59 @@
             this.pbCoin.TabIndex = 0;
             this.pbCoin.TabStop = false;
             // 
+            // cbAutorun
+            // 
+            this.cbAutorun.AutoSize = true;
+            this.cbAutorun.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cbAutorun.Checked = true;
+            this.cbAutorun.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbAutorun.Location = new System.Drawing.Point(477, 91);
+            this.cbAutorun.Name = "cbAutorun";
+            this.cbAutorun.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.cbAutorun.Size = new System.Drawing.Size(148, 17);
+            this.cbAutorun.TabIndex = 10;
+            this.cbAutorun.Text = "Автозапуск и автостарт";
+            this.cbAutorun.UseVisualStyleBackColor = true;
+            this.cbAutorun.Click += new System.EventHandler(this.cbAutorun_Click);
+            // 
+            // cbDoNotGetRevard
+            // 
+            this.cbDoNotGetRevard.AutoSize = true;
+            this.cbDoNotGetRevard.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cbDoNotGetRevard.Location = new System.Drawing.Point(628, 27);
+            this.cbDoNotGetRevard.Name = "cbDoNotGetRevard";
+            this.cbDoNotGetRevard.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.cbDoNotGetRevard.Size = new System.Drawing.Size(137, 17);
+            this.cbDoNotGetRevard.TabIndex = 10;
+            this.cbDoNotGetRevard.Text = "НЕ собирать награды";
+            this.cbDoNotGetRevard.UseVisualStyleBackColor = true;
+            // 
+            // cbHide
+            // 
+            this.cbHide.AutoSize = true;
+            this.cbHide.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cbHide.Location = new System.Drawing.Point(631, 91);
+            this.cbHide.Name = "cbHide";
+            this.cbHide.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.cbHide.Size = new System.Drawing.Size(138, 17);
+            this.cbHide.TabIndex = 10;
+            this.cbHide.Text = "Запускать свёрнутым";
+            this.cbHide.UseVisualStyleBackColor = true;
+            this.cbHide.Click += new System.EventHandler(this.cbHide_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoValidate = System.Windows.Forms.AutoValidate.EnablePreventFocusChange;
             this.ClientSize = new System.Drawing.Size(1244, 615);
             this.Controls.Add(this.gbStats);
             this.Controls.Add(this.cbDoNotSaveThePass);
+            this.Controls.Add(this.cbAutorun);
             this.Controls.Add(this.cbFire9);
             this.Controls.Add(this.cbFire);
+            this.Controls.Add(this.cbHide);
+            this.Controls.Add(this.cbDoNotGetRevard);
             this.Controls.Add(this.cbDoNotPut);
             this.Controls.Add(this.lCopyright);
             this.Controls.Add(this.lUserInfo);
@@ -377,10 +428,10 @@
             this.Controls.Add(this.lLogin);
             this.Controls.Add(this.LOGBox);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = "Небоскребы. Бот";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
+            this.Shown += new System.EventHandler(this.Form1_Shown);
             this.Resize += new System.EventHandler(this.Form1_Resize);
             this.gbStats.ResumeLayout(false);
             this.gbStats.PerformLayout();
@@ -424,6 +475,9 @@
         private System.Windows.Forms.PictureBox pbLevel;
         private System.Windows.Forms.PictureBox pbGold;
         private System.Windows.Forms.PictureBox pbCoin;
+        private System.Windows.Forms.CheckBox cbAutorun;
+        private System.Windows.Forms.CheckBox cbDoNotGetRevard;
+        private System.Windows.Forms.CheckBox cbHide;
     }
 }
 

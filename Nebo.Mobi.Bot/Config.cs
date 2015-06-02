@@ -9,6 +9,7 @@ namespace Nebo.Mobi.Bot
 {
     public class Config
     {
+        private string path;
         public string Login;
         public string Pass;
         public string MinTime;
@@ -18,45 +19,156 @@ namespace Nebo.Mobi.Bot
         public string FireLess;
         public string Fire9;
         public string DoNotSaveThePass;
+        public string DoNotGetRevard;
+        public string Hide;
 
-        //конструктор
-        public Config()
+        //конструктор с дефолтными настройками
+        public Config(string p)
         {
+            path = p;
+            Login = "";
+            Pass = "";
+            MinTime = "2";
+            MaxTime = "25";
+            DoNotPut = "false";
+            Fire = "true";
+            FireLess = "9";
+            Fire9 = "true";
+            DoNotSaveThePass = "false";
+            DoNotGetRevard = "false";
+            Hide = "false";
         }
         
         //метод подгрузки настроек
         public void LoadConfig()
         {
+            bool EverythingAlright = true;          //флаг правильности файла настроек
             XmlDocument doc = new XmlDocument();
-            doc.Load("config.xml");
+
+            try
+            {
+                doc.Load(path + "config.xml");
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
 
             XmlNode node;
-            node = doc.SelectSingleNode("config/Login");
-            Login = node.InnerText;
+            try
+            {
+                node = doc.SelectSingleNode("config/Login");
+                Login = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
 
-            node = doc.SelectSingleNode("config/Pass");
-            Pass = node.InnerText;
+            try
+            {
+                node = doc.SelectSingleNode("config/Pass");
+                Pass = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
 
-            node = doc.SelectSingleNode("config/MinTime");
-            MinTime = node.InnerText;
+            try
+            {
+                node = doc.SelectSingleNode("config/MinTime");
+                MinTime = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
 
-            node = doc.SelectSingleNode("config/MaxTime");
-            MaxTime = node.InnerText;
+            try
+            {
+                node = doc.SelectSingleNode("config/MaxTime");
+                MaxTime = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
 
-            node = doc.SelectSingleNode("config/DoNotPut");
-            DoNotPut = node.InnerText;
+            try
+            {
+                node = doc.SelectSingleNode("config/DoNotPut");
+                DoNotPut = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
 
-            node = doc.SelectSingleNode("config/Fire");
-            Fire = node.InnerText;
+            try
+            {
+                node = doc.SelectSingleNode("config/Fire");
+                Fire = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
 
-            node = doc.SelectSingleNode("config/FireLess");
-            FireLess = node.InnerText;
+            try
+            {
+                node = doc.SelectSingleNode("config/FireLess");
+                FireLess = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
 
-            node = doc.SelectSingleNode("config/Fire9");
-            Fire9 = node.InnerText;
+            try
+            {
+                node = doc.SelectSingleNode("config/Fire9");
+                Fire9 = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
 
-            node = doc.SelectSingleNode("config/DoNotSaveThePass");
-            DoNotSaveThePass = node.InnerText;
+            try
+            {
+                node = doc.SelectSingleNode("config/DoNotSaveThePass");
+                DoNotSaveThePass = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
+
+            try
+            {
+                node = doc.SelectSingleNode("config/DoNotGetRevard");
+                DoNotGetRevard = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
+
+            try
+            {
+                node = doc.SelectSingleNode("config/Hide");
+                Hide = node.InnerText;
+            }
+            catch
+            {
+                EverythingAlright = false;
+            }
+
+            if (!EverythingAlright)
+            {
+                WriteConfig();
+            }
         }
 
         //метод записи настроек
@@ -73,7 +185,7 @@ namespace Nebo.Mobi.Bot
             // речь идет о строке вида "<?xml version="1.0" encoding="utf-8"?>"
             settings.OmitXmlDeclaration = false;
 
-            doc = XmlWriter.Create("config.xml", settings);
+            doc = XmlWriter.Create(path + "config.xml", settings);
             // Создаем элемент <dname>sanchos</dname>
             doc.WriteStartElement("config");
             doc.WriteElementString("Login", Login);
@@ -85,6 +197,8 @@ namespace Nebo.Mobi.Bot
             doc.WriteElementString("FireLess", FireLess);
             doc.WriteElementString("Fire9", Fire9);
             doc.WriteElementString("DoNotSaveThePass", DoNotSaveThePass);
+            doc.WriteElementString("DoNotGetRevard", DoNotGetRevard);
+            doc.WriteElementString("Hide", Hide);
             doc.WriteEndElement();
             doc.Flush();
             doc.Close();
