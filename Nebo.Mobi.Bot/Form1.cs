@@ -14,7 +14,7 @@ namespace Nebo.Mobi.Bot
 {
     public partial class Form1 : Form
     {
-        private string version = "1.9";                         //версия бота
+        private string version = "1.91";                         //версия бота
 
         //блок разовой статистики
         private int lift_count;                                 //счетчик перевезенных в лифте
@@ -41,6 +41,7 @@ namespace Nebo.Mobi.Bot
         private int Action_Count;
 
         private static string SERVER = "http://nebo.mobi/";     //адрес сервера
+        //private static string SERVER = "http://pumpit.mmska.ru/";
         private static string NAME = "Небоскребы. Бот";         //имя окна
         private string CONNECT_STATUS = "";                     //статус соединения
         private string ACTION_STATUS = "";                      //теекущее действие
@@ -455,7 +456,7 @@ namespace Nebo.Mobi.Bot
         //жмакнуть по ссылке
         private void ClickLink(string link, string param)
         {
-            webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0");
+            webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.81 Safari/537.36");
             webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
             webClient.Encoding = Encoding.UTF8;
             try
@@ -466,8 +467,25 @@ namespace Nebo.Mobi.Bot
             {
                 ThreadSleep("ОШИБКА. " + ex.Message + '\n');
             }
+
+            //для отмороженных акков - пока не работает
+            if (HTML.Contains("pumpit") || HTML.Contains("одноклассники"))
+            {                
+                //SERVER = "http://nebo.pumpit.mmska.ru/";
+                /*
+                try
+                {
+                    HTML = webClient.UploadString(SERVER + link, param);
+                }
+                catch (Exception ex)
+                {
+                    ThreadSleep("ОШИБКА. " + ex.Message + '\n');
+                }*/
+                ThreadAbort("ОШИБКА. Аккаунты данного типа не поддерживаются.\n");
+            }
+
             if (HTML.Contains("502 Bad Gateway")) GetHomePage();
-        }
+        } 
 
         //подключение к серверу
         private void Connect()
@@ -478,8 +496,8 @@ namespace Nebo.Mobi.Bot
             string param = string.Format("id5_hf_0=&login={0}&password={1}&%3Asubmit=%D0%92%D1%85%D0%BE%D0%B4", tbLogin.Text.Replace(' ', '+'), Crypto.DecryptStr(tbPass.Text));
 
             ClickLink(LINK, param);
-            
-            if (HTML.Contains("Поле 'Имя в игре' обязательно для ввода.") || HTML.Contains("Неверное имя или пароль"))
+
+            if (HTML.Contains("Поле 'Имя в игре' обязательно для ввода.") || HTML.Contains("Неверное имя или пароль") || !HTML.Contains(tbLogin.Text))
             {
                 ThreadAbort("ОШИБКА. Неверный логин или пароль.\n");
             }
