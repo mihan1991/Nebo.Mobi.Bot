@@ -14,7 +14,7 @@ namespace Nebo.Mobi.Bot
 {
     public partial class Form1 : Form
     {
-        private string version = "1.91";                         //версия бота
+        private string version = "1.95";                         //версия бота
 
         //блок разовой статистики
         private int lift_count;                                 //счетчик перевезенных в лифте
@@ -456,7 +456,7 @@ namespace Nebo.Mobi.Bot
         //жмакнуть по ссылке
         private void ClickLink(string link, string param)
         {
-            webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.81 Safari/537.36");
+            webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/39.0");
             webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
             webClient.Encoding = Encoding.UTF8;
             try
@@ -470,7 +470,8 @@ namespace Nebo.Mobi.Bot
 
             //для отмороженных акков - пока не работает
             if (HTML.Contains("pumpit") || HTML.Contains("одноклассники"))
-            {                
+            {
+                //LOGBox.Text += HTML;
                 //SERVER = "http://nebo.pumpit.mmska.ru/";
                 /*
                 try
@@ -1064,12 +1065,12 @@ namespace Nebo.Mobi.Bot
                     //если дармоед - выкинуть
                     else 
                     {
-                        int level = 0;  //уровень, жильцов меньше которого выселять
+                        int level_to_kill = 0;  //уровень, жильцов меньше которого выселять
 
                         //защита от дурака
                         try
                         {
-                            level = Convert.ToInt32(tbFireLess.Text);
+                            level_to_kill = Convert.ToInt32(tbFireLess.Text);
                         }
                         catch
                         {
@@ -1077,17 +1078,17 @@ namespace Nebo.Mobi.Bot
                         }
 
                         //если там число, но не в диапазоне 1:9
-                        if (level <= 1 || level >= 10)
+                        if (level_to_kill <= 1 || level_to_kill >= 10)
                             ThreadAbort("ОШИБКА. Уровень должен быть от 1 до 9\n");  
 
                         //получаем уровень и сверяем с заданным
                         string rank = str[i + 2];
                         rank = rank.Substring(17);
                         rank = rank.Remove(1);
-                        int l = Convert.ToInt32(rank);
+                        int human_level = Convert.ToInt32(rank);
 
-                        //если уровень меньше заданного и стоит галочка выселения, или если он 9 и стоит галочка выселения (-)
-                        if (l < level && cbFire.Checked || level == 9 && cbFire9.Checked && str[i + 7].Contains("(-)"))
+                        //если уровень меньше заданного и стоит галочка выселения, или если он 9 и стоит галочка выселения, и есть (-)
+                        if (human_level < level_to_kill && cbFire.Checked || human_level == 9 && cbFire9.Checked && str[i + 7].Contains("(-)"))
                         {
                             Kill(ab);
                             //а теперь результаты надо сбросить
