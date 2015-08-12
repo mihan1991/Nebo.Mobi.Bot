@@ -14,7 +14,7 @@ namespace Nebo.Mobi.Bot
 {
     public partial class Form1 : Form
     {
-        private string version = "1.95";                         //версия бота
+        private string version = "1.96";                         //версия бота
 
         //блок разовой статистики
         private int lift_count;                                 //счетчик перевезенных в лифте
@@ -24,6 +24,7 @@ namespace Nebo.Mobi.Bot
         private int merch_count;                                //счетчик выложенных товаров (точнее этажей)
         private int killed_count;                               //счетчик выселенных 
         private int new_worker_count;                           //счетчик новых нанятых
+        private int opened_floor_count;                         //счетчик открытых этажей
         
         //блок данных пользователя
         private string User_Level;
@@ -38,6 +39,7 @@ namespace Nebo.Mobi.Bot
         private int Merch_Count;
         private int Killed_Count;
         private int New_Worker_Count;
+        private int Opened_Floor_Count;
         private int Action_Count;
 
         private static string SERVER = "http://nebo.mobi/";     //адрес сервера
@@ -161,7 +163,7 @@ namespace Nebo.Mobi.Bot
 
             //обнуление общей статистики
             User_Bucks = User_Coins = User_Level = "";
-            Lift_Count = Buy_Count = Coins_Count = Merch_Count = Killed_Count = New_Worker_Count = Action_Count = Bucks_Count = 0;
+            Lift_Count = Buy_Count = Coins_Count = Merch_Count = Killed_Count = New_Worker_Count = Action_Count = Bucks_Count = Opened_Floor_Count = 0;
 
             //если выбран автостарт и есть логин с паролем - запуск бота
             if (cbAutorun.Checked && tbLogin.Text != "" && tbPass.Text != "")
@@ -282,19 +284,21 @@ namespace Nebo.Mobi.Bot
             }
         }
 
-        //тупо получение главного экрана
+        //тупо получение главного экрана и проверка на открытие этажей
         private void GetHomePage()
         {
+            string ab;
             ClickLink(HOME_LINK, "");
             
             //получаем ссылку "Показать этажи"
-            string ab = Parse(HTML, "Показать этажи");
+            ab = Parse(HTML, "Показать этажи");
             if (ab != "")
             {
                 ab = ab.Substring(49);
                 ab = ab.Remove(ab.IndexOf("\""));
 
                 ClickLink(ab, "");
+                //Thread.Sleep(rnd.Next(100, 300));
             }
         }
 
@@ -379,8 +383,12 @@ namespace Nebo.Mobi.Bot
         {
             //сбрасываем таймер обратного отсчета
             timeleft = 0;
+            
             //подключаеся, идем на главную, раскрываем этажи
             GoHome();
+
+            //открываем этажи
+            TryToOpenFloor();
 
             if(User_Coins =="") GetInfo(); //получаем инфу до прогона
             //делаем 2 прогона (мб что-то доставят или купят випы)
@@ -1385,6 +1393,7 @@ namespace Nebo.Mobi.Bot
             else if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
                 TrayIcon.BalloonTipTitle = tbLogin.Text + ": " + User_Level;
+                /*
                 TrayIcon.BalloonTipText = string.Format(@"Всего прогонов: {0}
 
 Доставлено пассажиров: {1}
@@ -1393,8 +1402,19 @@ namespace Nebo.Mobi.Bot
 Этажей, на которых выложен товар: {4}
 Этажей, на которых закуплен товар: {5}
 Выселено дармоедов: {6}
-Нанято новых рабочих: {7}", Action_Count, Lift_Count, Bucks_Count, Coins_Count, Merch_Count, Buy_Count, Killed_Count, New_Worker_Count);
-                TrayIcon.ShowBalloonTip(1000);
+Нанято новых рабочих: {7}
+Открыто этажей: {8}", Action_Count, Lift_Count, Bucks_Count, Coins_Count, Merch_Count, Buy_Count, Killed_Count, New_Worker_Count, Opened_Floor_Count);
+                TrayIcon.ShowBalloonTip(1000);*/
+                MessageBox.Show(string.Format(@"Всего прогонов: {0}
+
+Доставлено пассажиров: {1}
+Собрано баксов: {2}
+Этажей, с которых собрана выручка: {3}
+Этажей, на которых выложен товар: {4}
+Этажей, на которых закуплен товар: {5}
+Выселено дармоедов: {6}
+Нанято новых рабочих: {7}
+Открыто этажей: {8}", Action_Count, Lift_Count, Bucks_Count, Coins_Count, Merch_Count, Buy_Count, Killed_Count, New_Worker_Count, Opened_Floor_Count), tbLogin.Text + ": " + User_Level, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -1432,6 +1452,26 @@ namespace Nebo.Mobi.Bot
             else cbHide.Enabled = false; 
         }
 
+        //пробуем открыть этаж
+        private void TryToOpenFloor()
+        {
+            string ab;
+            //проверяем - не надо ли открыть этаж
+            opened_floor_count = 0;
+            while ((ab = Parse(HTML, "Открыть этаж!")) != "")
+            {
+                ACTION_STATUS = "   -   Открываю этажи";
+                ab = ab.Substring(117);
+                ab = ab.Remove(ab.IndexOf("\""));
+
+                ClickLink(ab, "");
+                opened_floor_count++;
+                Opened_Floor_Count++;
+                Thread.Sleep(rnd.Next(100, 300));
+            }
+            if(opened_floor_count!=0) COMMUTATION_STR = string.Format("{0}  -  Открыто этажей: {1}.\n", GetTime(), opened_floor_count);
+        }
+
         //скрываем окно если стоит галочка
         private void Form1_Shown(object sender, EventArgs e)
         {
@@ -1463,6 +1503,5 @@ namespace Nebo.Mobi.Bot
         {
             bSave.BackColor = Color.Orange;
         }
-
     }
 }
