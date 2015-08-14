@@ -14,7 +14,7 @@ namespace Nebo.Mobi.Bot
 {
     public partial class Form1 : Form
     {
-        private string version = "1.96";                         //версия бота
+        private string version = "1.97";                         //версия бота
 
         //блок разовой статистики
         private int lift_count;                                 //счетчик перевезенных в лифте
@@ -324,13 +324,32 @@ namespace Nebo.Mobi.Bot
                 User_Bucks = ab.Replace("&#039;", "'");
             }
 
-            ab = Parse(HTML, "уровень");
-            if (ab != "")
+            //получаем уровень
+            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            int i;
+            for (i = 0; i < str.Length; i++)
             {
-                ab = ab.Substring(106);
-                ab = ab.Remove(ab.IndexOf('<'));
-                User_Level = ab + " уровень";
-            }            
+                if (str[i].Contains("уровень"))
+                {
+                    //фиксируем строчку со ссылкой на получение с учетом днюхи
+                    if (str[i].Contains("st_builded.png"))
+                    {
+                        ab = str[i - 1];
+                        ab = ab.Substring(106);
+                        ab = ab.Remove(ab.IndexOf('<'));
+                    }
+
+                    //ииначе - как обычный день
+                    else
+                    {
+                        ab = str[i];
+                        ab = ab.Substring(106);
+                        ab = ab.Remove(ab.IndexOf('<'));
+                    }
+                }
+            }
+            User_Level = ab + " уровень";
+
             TrayIcon.Text = tbLogin.Text + ": " + User_Level + ". Монет: " + User_Coins + " Баксов: " + User_Bucks;
         }
 
