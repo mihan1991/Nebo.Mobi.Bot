@@ -14,7 +14,7 @@ namespace Nebo.Mobi.Bot
 {
     public partial class Form1 : Form
     {
-        private string version = "1.97";                         //версия бота
+        private string version = "1.98";                         //версия бота
 
         //блок разовой статистики
         private int lift_count;                                 //счетчик перевезенных в лифте
@@ -331,15 +331,15 @@ namespace Nebo.Mobi.Bot
             {
                 if (str[i].Contains("уровень"))
                 {
-                    //фиксируем строчку со ссылкой на получение с учетом днюхи
-                    if (str[i].Contains("st_builded.png"))
+                    //фиксируем строчку с кубком или с учетом днюхой
+                    if(str[i].Contains("award-g.png") || str[i].Contains("st_builded.png"))
                     {
                         ab = str[i - 1];
                         ab = ab.Substring(106);
                         ab = ab.Remove(ab.IndexOf('<'));
                     }
 
-                    //ииначе - как обычный день
+                    //ииначе - как обычный игрок в обычный день
                     else
                     {
                         ab = str[i];
