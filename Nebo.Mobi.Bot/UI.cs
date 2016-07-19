@@ -1545,7 +1545,15 @@ namespace Nebo.Mobi.Bot
             if (HTML.Contains("Вы попытались загрузить"))
             {
                 Thread.Sleep(rnd.Next(100, 300));
-                HTML = webClient.UploadString(SERVER + link, param);
+                try
+                {
+                    Thread.Sleep(rnd.Next(500, 800));
+                    HTML = webClient.UploadString(SERVER + link, param);
+                }
+                catch (Exception ex)
+                {
+                    ThreadSleep("ОШИБКА. " + ex.Message + "\n");
+                }
             }
             else if(HTML.Contains("502 Bad Gateway"))
             {
@@ -2333,11 +2341,11 @@ namespace Nebo.Mobi.Bot
 
 
                 //получаем ссылку "принять на работу"
+                ab = Parse(HTML, "принять на работу");
 
                 //ab = ab.Substring(115);
                 ab = ab.Substring(92);
                 ab = ab.Remove(ab.IndexOf('\"'));
-
 
                 //и, наконец, нажимием на "принять на работу"
                 ClickLink(ab, "");
@@ -2416,8 +2424,10 @@ namespace Nebo.Mobi.Bot
                             {
                                 //получаем уровень игрока
                                 int Level;
-                                
-                                ab = str[i].Substring(83);
+
+                                if (!str[i].Contains("st_builded.png") && !str[i].Contains("award-g.png"))
+                                    ab = str[i].Substring(83);
+                                else ab = str[i - 1].Substring(83);
                                 ab = ab.Remove(ab.IndexOf('<'));
 
                                 Level = Convert.ToInt32(ab);
@@ -2425,7 +2435,10 @@ namespace Nebo.Mobi.Bot
                                 //если уровень входит в диапазон - пробуем войти
                                 if (Level >= InvMinLvl && Level <= InvMaxLvl)
                                 {
-                                    ab = str[i-1].Substring(28);
+                                    if (!str[i].Contains("st_builded.png") && !str[i].Contains("award-g.png"))
+                                        ab = str[i - 1].Substring(28);
+                                    else ab = str[i - 2].Substring(28);
+                                    
                                     ab = ab.Remove(ab.IndexOf('\"'));
 
                                     ClickLink(ab,"");
