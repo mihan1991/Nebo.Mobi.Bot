@@ -134,6 +134,15 @@ namespace Nebo.Mobi.Bot.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to По возможности автоматически назначать НОВИЧКОВ в городе на указанную должность..
+        /// </summary>
+        internal static string cbAppoint {
+            get {
+                return ResourceManager.GetString("cbAppoint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Запускать программу вместе с Windows и по возможности запускать бота для всех профилей..
         /// </summary>
         internal static string cbAutorun {
@@ -229,6 +238,15 @@ namespace Nebo.Mobi.Bot.Properties {
         internal static string cbInviteTo {
             get {
                 return ResourceManager.GetString("cbInviteTo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Должность, на которую будет назначен НОВИЧОК..
+        /// </summary>
+        internal static string cboxAppointTo {
+            get {
+                return ResourceManager.GetString("cboxAppointTo", resourceCulture);
             }
         }
         

@@ -67,6 +67,8 @@ namespace Nebo.Mobi.Bot
         private TextBox tbInviteFrom;
         private CheckBox cbInviteTo;
         private TextBox tbInviteTo;
+        private CheckBox cbAppoint;
+        private ComboBox cboxAppointTo;
 
         private Grid gStatLOG;
         private System.Windows.Forms.Integration.WindowsFormsHost wfhIntegr;
@@ -195,6 +197,10 @@ namespace Nebo.Mobi.Bot
                 tbInviteTo.IsEnabled = false;
             else
                 tbInviteTo.IsEnabled = true;
+            if (!Convert.ToBoolean(user_cfg.Appoint))
+                cboxAppointTo.IsEnabled = false;
+            else
+                cboxAppointTo.IsEnabled = true;
         }
 
         //инициализация контролов
@@ -241,6 +247,8 @@ namespace Nebo.Mobi.Bot
             tbInviteFrom = new TextBox();
             cbInviteTo = new CheckBox();
             tbInviteTo = new TextBox();
+            cbAppoint = new CheckBox();
+            cboxAppointTo = new ComboBox();
 
             gStatLOG = new Grid();
             wfhIntegr = new System.Windows.Forms.Integration.WindowsFormsHost();
@@ -525,8 +533,8 @@ namespace Nebo.Mobi.Bot
             gbInvite.Name = "gbInvite";
             gbInvite.HorizontalAlignment = HorizontalAlignment.Left;
             gbInvite.Margin = new Thickness(280, 22, 0, 0);
-            gbInvite.Width = 154;
-            gbInvite.Height = 75;
+            gbInvite.Width = 225;
+            gbInvite.Height = 100;
             gbInvite.VerticalAlignment = VerticalAlignment.Top;
 
             cbInviteFrom.Name = "cbInviteFrom";
@@ -567,11 +575,36 @@ namespace Nebo.Mobi.Bot
             tbInviteTo.MouseEnter += ShowToolTip;
             tbInviteTo.TextChanged += tbTextChanged;
 
+            cbAppoint.Name = "cbAppoint";
+            cbAppoint.Content = "На должность:";
+            cbAppoint.Height = 20;
+            cbAppoint.Margin = new Thickness(5, 70, 0, 0);
+            cbAppoint.HorizontalAlignment = HorizontalAlignment.Left;
+            cbAppoint.VerticalAlignment = VerticalAlignment.Top;
+            cbAppoint.MouseEnter += ShowToolTip;
+            cbAppoint.Click += cbClick;
+
+            cboxAppointTo.Name = "cboxAppointTo";
+            cboxAppointTo.Items.Add("вице-мэр");
+            cboxAppointTo.Items.Add("советник");
+            cboxAppointTo.Items.Add("бизнесмен");
+            cboxAppointTo.Items.Add("горожанин");
+            cboxAppointTo.Height = 23;
+            cboxAppointTo.Margin = new Thickness(110, 65, 0, 0);
+            cboxAppointTo.HorizontalAlignment = HorizontalAlignment.Left;
+            cboxAppointTo.VerticalAlignment = VerticalAlignment.Top;
+            cboxAppointTo.Width = 100;
+            cboxAppointTo.IsEditable = false;
+            cboxAppointTo.MouseEnter += ShowToolTip;
+            cboxAppointTo.SelectionChanged += cboxSelectedChanged;
+
             gInviteData.Name = "gInviteData";
             gInviteData.Children.Add(cbInviteFrom);
             gInviteData.Children.Add(tbInviteFrom);
             gInviteData.Children.Add(cbInviteTo);
             gInviteData.Children.Add(tbInviteTo);
+            gInviteData.Children.Add(cbAppoint);
+            gInviteData.Children.Add(cboxAppointTo);
 
             gbInvite.Content = gInviteData;
 
@@ -700,6 +733,8 @@ namespace Nebo.Mobi.Bot
             tbInviteFrom.Text = user_cfg.InviteFromMeaning;
             cbInviteTo.IsChecked = Convert.ToBoolean(user_cfg.InviteTo);
             tbInviteTo.Text = user_cfg.InviteToMeaning;
+            cbAppoint.IsChecked = Convert.ToBoolean(user_cfg.Appoint);
+            cboxAppointTo.SelectedItem = user_cfg.AppointTo;
             spPageHeadImg.Source = new BitmapImage(new Uri("/Resources/" + user_cfg.Avatar, UriKind.Relative));
         }
 
@@ -736,6 +771,8 @@ namespace Nebo.Mobi.Bot
             user_cfg.InviteFromMeaning = tbInviteFrom.Text;
             user_cfg.InviteTo = cbInviteTo.IsChecked.Value.ToString().ToLower();
             user_cfg.InviteToMeaning = tbInviteTo.Text;
+            user_cfg.Appoint = cbAppoint.IsChecked.Value.ToString().ToLower();
+            user_cfg.AppointTo = cboxAppointTo.SelectedItem.ToString();
         }
 
         //возвращает страницу
@@ -823,7 +860,21 @@ namespace Nebo.Mobi.Bot
                     else
                         tbInviteTo.IsEnabled = false;
                     break;
+
+                //лочим комбобокс должностей
+                case "cbAppoint":
+                    if (((CheckBox)sender).IsChecked.Value == true)
+                        cboxAppointTo.IsEnabled = true;
+                    else
+                        cboxAppointTo.IsEnabled = false;
+                    break;
             }            
+            SaveUserConfig();
+        }
+
+        //событие по смене выбранной позиции в комбобоксе
+        private void cboxSelectedChanged(object sender, EventArgs e)
+        {
             SaveUserConfig();
         }
 
@@ -1174,8 +1225,8 @@ namespace Nebo.Mobi.Bot
             {
                 if (str[i].Contains("уровень"))
                 {
-                    //фиксируем строчку с кубком или с учетом днюхой
-                    if (str[i].Contains("award-g.png") || str[i].Contains("st_builded.png"))
+                    //фиксируем строчку с кубком, днюхой или еще каким дерьмом
+                    if (!str[i].Contains("star.png"))
                         ab = str[i - 1];
                     //ииначе - как обычный игрок в обычный день
                     else
@@ -1209,7 +1260,7 @@ namespace Nebo.Mobi.Bot
             //получаем количество этажей
             for (i = 0; i < str.Length; i++)
             {
-                if (str[i].Contains("class=\"flhdr\" href=\"floor"))
+                if (str[i].Contains("class=\"flhdr\""))
                 {
                     ab = str[i + 1];
                     ab = ab.Substring(15);
@@ -2125,9 +2176,20 @@ namespace Nebo.Mobi.Bot
                             Thread.Sleep(rnd.Next(100, 300));
                         }
                     }
+                }
+            }
 
-                    //иначе проверяем, не лучше ли этот житель уже работающих
-                    else
+            //иначе проверяем, не (+) ли он
+            for (i = 0; i < str.Length; i++)
+            {
+                //анализ жильца
+                if (str[i].Contains("\" class=\"white\""))
+                {
+                    //получаем ссылку на чувака
+                    ab = str[i].Substring(17);
+                    ab = ab.Remove(ab.IndexOf('\"'));
+
+                    if(str[i + 7].Contains("(+)"))
                     {
                         bak_i = i + 7; //бекапим строку чтобы снова не начать с чуваком возиться
 
@@ -2163,7 +2225,6 @@ namespace Nebo.Mobi.Bot
 
                         Thread.Sleep(rnd.Next(100, 300));
                     }
-
                 }
             }
             //крайние меры - обновление происходит быстрее формирования статуса
@@ -2369,23 +2430,31 @@ namespace Nebo.Mobi.Bot
             string[] str;
             int InvMinLvl = -1, InvMaxLvl = -1;
 
-            try
+            if (Convert.ToBoolean(user_cfg.InviteFrom))
             {
-                InvMinLvl = Convert.ToInt32(user_cfg.InviteFromMeaning);
+                try
+                {
+                    InvMinLvl = Convert.ToInt32(user_cfg.InviteFromMeaning);
+                }
+                catch
+                {
+                    ThreadAbort("ОШИБКА. Минимальный уровень игрока должен быть от 10 до 75\n");
+                }
             }
-            catch
-            {
-                ThreadAbort("ОШИБКА. Минимальный уровень игрока должен быть от 10 до 75\n");
-            }
+            else InvMinLvl = 10;
 
-            try
+            if (Convert.ToBoolean(user_cfg.InviteTo))
             {
-                InvMaxLvl = Convert.ToInt32(user_cfg.InviteToMeaning);
+                try
+                {
+                    InvMaxLvl = Convert.ToInt32(user_cfg.InviteToMeaning);
+                }
+                catch
+                {
+                    ThreadAbort("ОШИБКА. Максимальный уровень игрока должен быть от 10 до 75\n");
+                }
             }
-            catch
-            {
-                ThreadAbort("ОШИБКА. Максимальный уровень игрока должен быть от 10 до 75\n");
-            }
+            else InvMaxLvl = 75;
 
             invited_count = 0;
 
@@ -2425,7 +2494,7 @@ namespace Nebo.Mobi.Bot
                                 //получаем уровень игрока
                                 int Level;
 
-                                if (!str[i].Contains("st_builded.png") && !str[i].Contains("award-g.png"))
+                                if (str[i].Contains("star.png"))
                                     ab = str[i].Substring(83);
                                 else ab = str[i - 1].Substring(83);
                                 ab = ab.Remove(ab.IndexOf('<'));
@@ -2435,7 +2504,7 @@ namespace Nebo.Mobi.Bot
                                 //если уровень входит в диапазон - пробуем войти
                                 if (Level >= InvMinLvl && Level <= InvMaxLvl)
                                 {
-                                    if (!str[i].Contains("st_builded.png") && !str[i].Contains("award-g.png"))
+                                    if (str[i].Contains("star.png"))
                                         ab = str[i - 1].Substring(28);
                                     else ab = str[i - 2].Substring(28);
                                     
@@ -2481,22 +2550,6 @@ namespace Nebo.Mobi.Bot
             Thread.Sleep(rnd.Next(100, 300));
         }
 
-
-
-        //обработчик собычия изменения чек-бокса увольнения по уровню
-        private void cbFire_CheckedChanged(object sender, EventArgs e)
-        {
-            if (cbFire.IsChecked.Value) tbFireLess.IsEnabled = true;
-            else tbFireLess.IsEnabled = false;
-        }
-
-
-        //событие изменения поля "Пароль"
-        private void tbPass_TextChanged(object sender, EventArgs e)
-        {
-            PassChanged = true;
-        }
-
         //пробуем открыть этаж
         private void TryToOpenFloor()
         {
@@ -2520,6 +2573,26 @@ namespace Nebo.Mobi.Bot
             if (opened_floor_count != 0) COMMUTATION_STR = string.Format("{0}  -  Открыто этажей: {1}.", GetTime(), opened_floor_count);
             ACTION_STATUS = "Анализ ситуации";
             Thread.Sleep(rnd.Next(100, 300));
+        }
+
+        //пробуем назначить на должность
+        private void TryToAppoint()
+        {
+            string[] str;
+
+            GetHomePage();
+
+            //ссылка в Город
+            string ab = "";
+            ab = Parse(HTML, "Мой город");
+            if (ab != "")
+            {
+                ab = ab.Substring(45);
+                ab = ab.Remove(ab.IndexOf('\"'));
+
+                //идем в Город
+                ClickLink(ab, "");
+            }
         }
     }
 }

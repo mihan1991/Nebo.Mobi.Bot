@@ -34,6 +34,8 @@ namespace Nebo.Mobi.Bot
             public string InviteFromMeaning;
             public string InviteTo;
             public string InviteToMeaning;
+            public string Appoint;
+            public string AppointTo;
             public string Avatar;
 
             //инициализируем дефолтные настройки для конкретного пользователя
@@ -55,6 +57,8 @@ namespace Nebo.Mobi.Bot
                 InviteFromMeaning = "10";
                 InviteTo = "false";
                 InviteToMeaning = "75";
+                Appoint = "true";
+                AppointTo = "горожанин";
                 Avatar = "unknown.png";
             }            
         }        
@@ -69,7 +73,7 @@ namespace Nebo.Mobi.Bot
             UsersCount = 1;             //1 т.к. создастся 1 пустой персонаж
             Autorun = "false";
             Hide = "false";
-            SizeX = "900";
+            SizeX = "985";
             SizeY = "700";
             users = new List<User>();
             LoadConfig();
@@ -271,6 +275,26 @@ namespace Nebo.Mobi.Bot
 
                     try
                     {
+                        node = doc.SelectSingleNode(string.Format("config/u{0}/Appoint", i));
+                        u.Appoint = node.InnerText;
+                    }
+                    catch
+                    {
+                        EverythingAlright = false;
+                    }
+
+                    try
+                    {
+                        node = doc.SelectSingleNode(string.Format("config/u{0}/AppointTo", i));
+                        u.AppointTo = node.InnerText;
+                    }
+                    catch
+                    {
+                        EverythingAlright = false;
+                    }
+
+                    try
+                    {
                         node = doc.SelectSingleNode(string.Format("config/u{0}/Avatar", i));
                         u.Avatar = node.InnerText;
                     }
@@ -338,7 +362,7 @@ namespace Nebo.Mobi.Bot
         }
 
         //метод записи настроек
-        public void WriteConfig(List<UI> us)
+        public void WriteConfig(List<User> us)
         {
             XmlWriter doc;
             XmlWriterSettings settings = new XmlWriterSettings();
@@ -364,7 +388,7 @@ namespace Nebo.Mobi.Bot
             }
             for (int i = 0; i < UsersCount; i++)
             {
-                users[i] = us[i].GetUserCfg();
+                users[i] = us[i];
                 doc.WriteStartElement(string.Format("u{0}", i));
                 doc.WriteElementString("Login", users[i].Login);
                 doc.WriteElementString("Pass", users[i].Pass);
@@ -382,6 +406,8 @@ namespace Nebo.Mobi.Bot
                 doc.WriteElementString("InviteFromMeaning", users[i].InviteFromMeaning);
                 doc.WriteElementString("InviteTo", users[i].InviteTo);
                 doc.WriteElementString("InviteToMeaning", users[i].InviteToMeaning);
+                doc.WriteElementString("Appoint", users[i].Appoint);
+                doc.WriteElementString("AppointTo", users[i].AppointTo);
                 doc.WriteElementString("Avatar", users[i].Avatar);
                 doc.WriteEndElement(); //u[i]
             }
@@ -441,6 +467,8 @@ namespace Nebo.Mobi.Bot
                 doc.WriteElementString("InviteFromMeaning", users[i].InviteFromMeaning);
                 doc.WriteElementString("InviteTo", users[i].InviteTo);
                 doc.WriteElementString("InviteToMeaning", users[i].InviteToMeaning);
+                doc.WriteElementString("Appoint", users[i].Appoint);
+                doc.WriteElementString("AppointTo", users[i].AppointTo);
                 doc.WriteElementString("Avatar", users[i].Avatar);
                 doc.WriteEndElement(); //u[i]
             }

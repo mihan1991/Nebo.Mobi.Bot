@@ -27,7 +27,7 @@ namespace Nebo.Mobi.Bot
     [Serializable]
     public partial class MainWindow : Window
     {
-        private string version = "2.11";                          //версия бота
+        private string version = "2.2b";                          //версия бота
         private Config cfg;                                      //хранилище настроек
         private List<UI> ui;                                     //коллекция объектов страниц профиля и работы боты
 
@@ -221,7 +221,10 @@ namespace Nebo.Mobi.Bot
                 AutorunChanged = false;
             }
 
-            cfg.WriteConfig(ui);
+            List<Config.User> usr = new List<Config.User>();
+            for (int i = 0; i < ui.Count; i++)
+                usr.Add(ui[i].GetUserCfg());
+            cfg.WriteConfig(usr);
         }
 
         private void Window_Initialized(object sender, EventArgs e)
@@ -244,8 +247,13 @@ namespace Nebo.Mobi.Bot
                 cbHide.IsEnabled = true;
             else cbHide.IsEnabled = false;
 
-            //получаем директорию файла
-            Current_Path = new FileInfo(AppDomain.CurrentDomain.BaseDirectory).ToString();
+            //получаем директорию с настройками. если нет - создаем
+            Current_Path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Nebo.Mobi.Bot/";
+            if(!(new DirectoryInfo(Current_Path).Exists))
+            {
+                Directory.CreateDirectory(Current_Path);
+            }
+            //Current_Path = new FileInfo(AppDomain.CurrentDomain.BaseDirectory).ToString();
 
             //подгружаем настройки
             cfg = new Config(Current_Path);
@@ -278,6 +286,12 @@ namespace Nebo.Mobi.Bot
 
             //удаляем шаблонный (костыль)
             tcUsers.Items.RemoveAt(0);
+
+            cboxAppointTo.Items.Add("вице-мэр");
+            cboxAppointTo.Items.Add("советник");
+            cboxAppointTo.Items.Add("бизнесмен");
+            cboxAppointTo.Items.Add("горожанин");
+            cboxAppointTo.SelectedItem = "горожанин";
 
             //добавляем страницы пользователей
             for (int i = 0; i < cfg.UsersCount; i++)
