@@ -83,6 +83,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="BotEngine.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Crypto.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

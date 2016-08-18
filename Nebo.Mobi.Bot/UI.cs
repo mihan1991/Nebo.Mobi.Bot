@@ -79,79 +79,39 @@ namespace Nebo.Mobi.Bot
 
         private Grid gUserSatusData;
 
-
-
         //тупо для удобства задания высоты TextBlock
         private int tbHeight;
 
-        private bool PageCreated;
+        //переменные для фиксации изменений в textbox
+        public bool tbLoginChanged;
+        public bool tbPassChanged;
+        public bool tbMinTimeChanged;
+        public bool tbMaxTimeChanged;
+        public bool tbFireLessChanged;
+        public bool tbInviteFromChanged;
+        public bool tbInviteToChanged;
 
-        /// <summary>
-        //блок разовой статистики
-        private int lift_count;                                 //счетчик перевезенных в лифте
-        private int buy_count;                                  //счетчик купленных товаров
-        private int coins_count;                                //счетчик собранных выручек (точнее этажей)
-        private int bucks_count;                                //счетчик полученных баксов (пока только чаевые)
-        private int merch_count;                                //счетчик выложенных товаров (точнее этажей)
-        private int killed_count;                               //счетчик выселенных 
-        private int new_worker_count;                           //счетчик новых нанятых
-        private int opened_floor_count;                         //счетчик открытых этажей
-        private int invited_count;                              //счетчик приглашенных
 
-        //блок данных пользователя
-        private string User_Level;
-        private string User_Bucks;
-        private string User_Coins;
-        private string User_City;
-        private string User_Floors;
-        private string City_Role;
+        private double timeleft;                                   //секунд до начала нового прохода
 
-        //блок общей статистики работы
-        private int Lift_Count;
-        private int Bucks_Count;
-        private int Buy_Count;
-        private int Coins_Count;
-        private int Merch_Count;
-        private int Killed_Count;
-        private int New_Worker_Count;
-        private int Opened_Floor_Count;
-        private int Invited_Count;
-        private int Action_Count;
-        private string[] Stat;
+        private BotEngine BOT;                                  //движуха бота
+        private Config.User user_cfg;                           //для удобства здесь будем хранить конфиги
 
-        private static string SERVER = "https://vnebo.mobi/";     //адрес сервера
-        //private static string SERVER = "http://pumpit.mmska.ru/";
-        private string CONNECT_STATUS = "";                     //статус соединения
-        private string ACTION_STATUS = "";                      //теекущее действие
-        private string CURRENT_HTML;
-
-        private Random rnd;
         private DispatcherTimer bot_timer;                      //таймер запуска прохода бота
         private DispatcherTimer ref_timer;                      //таймер обновления страницы
-        private string HTML;                                    //html-код текущей страницы
-        private string LINK;                                    //переменная для обмена ссылками
-        private string HOME_LINK;                               //ссылка на домашнюю страницу
-        private string COMMUTATION_STR;                         //строка для логов
-        private int timeleft;                                   //секунд до начала нового прохода
-
-        private Thread Bot;                                     //переменная потока бота
-
-        private Config.User user_cfg;                                     //объект класса настроек
-
-        //переменные для фиксации изменений в textbox
-        private bool PassChanged;
-
-        private WebClient webClient;
 
 
         //конструктор для профиля из конфига
-        public UI(Config.User conf)
+        public UI(Config.User cfg)
         {
             //создаем контролы
             CreateControls();
 
+            //инициализируем конфиги и бота
+            user_cfg = cfg;
+            BOT = new BotEngine(cfg);
+
             //получаем настройки и забиваем поля
-            user_cfg = conf;
             LoadConfig();
             InitContent();
         }
@@ -165,20 +125,20 @@ namespace Nebo.Mobi.Bot
             //получаем настройки и забиваем поля
             user_cfg = new Config.User();
             user_cfg.InitUserDefault();
+            BOT = new BotEngine();
+
             LoadConfig();
             InitContent();             
         }
 
         private void InitContent()
         {
-            PassChanged = false;
-
             //вывод стартовой страницы
             if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                CreateHTMLPage(Properties.Resources.start);
+                BOT.CreateHTMLPage(Properties.Resources.start);
             else
-                CreateHTMLPage(Properties.Resources.start_off);
-            wbAction.DocumentText = CURRENT_HTML;
+                BOT.CreateHTMLPage(Properties.Resources.start_off);
+            wbAction.DocumentText = BOT.CURRENT_HTML;
 
             //отключаем ненужные контролы
             if (!Convert.ToBoolean(user_cfg.Fire))
@@ -258,13 +218,10 @@ namespace Nebo.Mobi.Bot
 
             gUserSatusData = new Grid();
 
-            webClient = new WebClient();
-
-            rnd = new Random();
-
             bot_timer = new DispatcherTimer();
             ref_timer = new DispatcherTimer();
 
+            //события на тик таймеров
             bot_timer.Tick += bot_timer_Tick;
             ref_timer.Tick += ref_timer_Tick;
 
@@ -272,14 +229,9 @@ namespace Nebo.Mobi.Bot
             bot_timer.IsEnabled = false;
             ref_timer.IsEnabled = false;
 
-            COMMUTATION_STR = "";
+            //сброс флагов изменения текстбоксов
+            tbLoginChanged = tbPassChanged = tbMinTimeChanged = tbMaxTimeChanged = tbFireLessChanged = tbInviteFromChanged = tbInviteToChanged = false;
 
-
-            //обнуление общей статистики
-            User_Bucks = User_Coins = User_Level = User_City = City_Role = "";
-            Lift_Count = Buy_Count = Coins_Count = Merch_Count = Killed_Count = New_Worker_Count = Action_Count = Bucks_Count = Opened_Floor_Count = Invited_Count = 0;
-
-            Bot = new Thread(StartBot);
 
             tbHeight = 25;
 
@@ -321,7 +273,7 @@ namespace Nebo.Mobi.Bot
             tbLogin.HorizontalAlignment = HorizontalAlignment.Left;
             tbLogin.MouseEnter += ShowToolTip;
             tbLogin.TextChanged += tbTextChanged;
-
+            tbLogin.LostFocus += tbLostFocus;
 
             lPass.Content = "Пароль:";
             lPass.Height = 25;
@@ -416,6 +368,7 @@ namespace Nebo.Mobi.Bot
             tbMinTime.VerticalContentAlignment = VerticalAlignment.Center;
             tbMinTime.Margin = new Thickness(30, 5, 0, 0);
             tbMinTime.MouseEnter += ShowToolTip;
+            tbMinTime.LostFocus += tbLostFocus;
             tbMinTime.TextChanged += tbTextChanged;
 
 
@@ -437,6 +390,7 @@ namespace Nebo.Mobi.Bot
             tbMaxTime.VerticalContentAlignment = VerticalAlignment.Center;
             tbMaxTime.Margin = new Thickness(30, 35, 0, 0);
             tbMaxTime.MouseEnter += ShowToolTip;
+            tbMaxTime.LostFocus += tbLostFocus;
             tbMaxTime.TextChanged += tbTextChanged;
 
 
@@ -499,6 +453,7 @@ namespace Nebo.Mobi.Bot
             tbFireLess.Margin = new Thickness(225, 40, 0, 0);
             tbFireLess.VerticalContentAlignment = VerticalAlignment.Center;
             tbFireLess.MouseEnter += ShowToolTip;
+            tbFireLess.LostFocus += tbLostFocus;
             tbFireLess.TextChanged += tbTextChanged;
 
 
@@ -554,6 +509,7 @@ namespace Nebo.Mobi.Bot
             tbInviteFrom.VerticalContentAlignment = VerticalAlignment.Center;
             tbInviteFrom.Width = 25;
             tbInviteFrom.MouseEnter += ShowToolTip;
+            tbInviteFrom.LostFocus += tbLostFocus;
             tbInviteFrom.TextChanged += tbTextChanged;
 
             cbInviteTo.Name = "cbInviteTo";
@@ -573,6 +529,7 @@ namespace Nebo.Mobi.Bot
             tbInviteTo.VerticalContentAlignment = VerticalAlignment.Center;
             tbInviteTo.Width = 25;
             tbInviteTo.MouseEnter += ShowToolTip;
+            tbInviteTo.LostFocus += tbLostFocus;
             tbInviteTo.TextChanged += tbTextChanged;
 
             cbAppoint.Name = "cbAppoint";
@@ -714,9 +671,11 @@ namespace Nebo.Mobi.Bot
         //подгружаем настройки
         private void LoadConfig()
         {
+            user_cfg = BOT.user_cfg;
+
             tbLogin.Text = user_cfg.Login;
             //если логин не пустой, то в заголовок пишем его
-            if (user_cfg.Login != "")
+            if (BOT.user_cfg.Login != "")
                 spPageHeadName.Text = user_cfg.Login;
             tbPass.Password = user_cfg.Pass;
             tbMinTime.Text = user_cfg.MinTime;
@@ -737,43 +696,7 @@ namespace Nebo.Mobi.Bot
             cboxAppointTo.SelectedItem = user_cfg.AppointTo;
             spPageHeadImg.Source = new BitmapImage(new Uri("/Resources/" + user_cfg.Avatar, UriKind.Relative));
         }
-
-        //вернуть таймер бота
-        public Thread GetBotThread()
-        {
-            return Bot;
-        }
-
-        //вернуть конфиги юзера
-        public Config.User GetUserCfg()
-        {
-            return user_cfg;
-        }
-
-        //сохранить настройки
-        public void SaveUserConfig()
-        {
-            user_cfg.Login = tbLogin.Text;
-            if (cbDoNotSaveThePass.IsChecked.Value)
-                user_cfg.Pass = "";
-            else user_cfg.Pass = tbPass.Password;
-            user_cfg.DoNotSaveThePass = cbDoNotSaveThePass.IsChecked.Value.ToString().ToLower();
-            user_cfg.MinTime = tbMinTime.Text;
-            user_cfg.MaxTime = tbMaxTime.Text;
-            user_cfg.DoNotPut = cbDoNotPut.IsChecked.Value.ToString().ToLower();
-            user_cfg.Fire = cbFire.IsChecked.Value.ToString().ToLower();
-            user_cfg.FireLess = tbFireLess.Text;
-            user_cfg.Fire9 = cbFire9.IsChecked.Value.ToString().ToLower();
-            user_cfg.DoNotGetRevard = cbDoNotGetRevard.IsChecked.Value.ToString().ToLower();
-            user_cfg.DoNotShowStatistic = cbDoNotShowStatistic.IsChecked.Value.ToString().ToLower();
-            user_cfg.Invite = cbInvite.IsChecked.Value.ToString().ToLower();
-            user_cfg.InviteFrom = cbInviteFrom.IsChecked.Value.ToString().ToLower();
-            user_cfg.InviteFromMeaning = tbInviteFrom.Text;
-            user_cfg.InviteTo = cbInviteTo.IsChecked.Value.ToString().ToLower();
-            user_cfg.InviteToMeaning = tbInviteTo.Text;
-            user_cfg.Appoint = cbAppoint.IsChecked.Value.ToString().ToLower();
-            user_cfg.AppointTo = cboxAppointTo.SelectedItem.ToString();
-        }
+                
 
         //возвращает страницу
         public Object GetPage()
@@ -806,12 +729,16 @@ namespace Nebo.Mobi.Bot
         {
             bStart.IsEnabled = false;
             bStop.IsEnabled = true;
-            if (Bot != null && Bot.IsAlive) StopBotThread();
-            Bot = new Thread(StartBot);
+            if (BOT.GetBotThread() != null && BOT.GetBotThread().IsAlive) StopBotThread();
+
+            //переинициалицазия потока бота (иначе считается "живым")
+            BOT.ResetThread();
             if (bot_timer.IsEnabled) bot_timer.IsEnabled = false;
             ref_timer.Start();
+
+            timeleft = 0;
             //spPageHeadImg.Source = new BitmapImage(new Uri("/Resources/player-m.png", UriKind.Relative));
-            Bot.Start();
+            BOT.GetBotThread().Start();
         }
 
         //если клик по чек-боксу - сохраняем конфиг (в памяти)
@@ -822,11 +749,11 @@ namespace Nebo.Mobi.Bot
                 //выбор отображения статистики
                 case "cbDoNotShowStatistic":
                     if (((CheckBox)sender).IsChecked.Value == true)
-                        CreateHTMLPage(Properties.Resources.start_off);
+                        BOT.CreateHTMLPage(Properties.Resources.start_off);
                     else
-                        CreateHTMLPage(Properties.Resources.start);
+                        BOT.CreateHTMLPage(Properties.Resources.start);
 
-                    wbAction.DocumentText = CURRENT_HTML;
+                    wbAction.DocumentText = BOT.CURRENT_HTML;
                     break;
 
                 //лочим текстбокс с уровнем жильцов на выселение
@@ -878,6 +805,35 @@ namespace Nebo.Mobi.Bot
             SaveUserConfig();
         }
 
+        //сохранить настройки
+        public void SaveUserConfig()
+        {
+            if ((Convert.ToBoolean(user_cfg.DoNotSaveThePass)))
+                user_cfg.Pass = "";
+            else user_cfg.Pass = tbPass.Password;
+            user_cfg.DoNotSaveThePass = cbDoNotSaveThePass.IsChecked.Value.ToString().ToLower();
+            user_cfg.MinTime = tbMinTime.Text;
+            user_cfg.MaxTime = tbMaxTime.Text;
+            user_cfg.DoNotPut = cbDoNotPut.IsChecked.Value.ToString().ToLower();
+            user_cfg.Fire = cbFire.IsChecked.Value.ToString().ToLower();
+            user_cfg.FireLess = tbFireLess.Text;
+            user_cfg.Fire9 = cbFire9.IsChecked.Value.ToString().ToLower();
+            user_cfg.DoNotGetRevard = cbDoNotGetRevard.IsChecked.Value.ToString().ToLower();
+            user_cfg.DoNotShowStatistic = cbDoNotShowStatistic.IsChecked.Value.ToString().ToLower();
+            user_cfg.Invite = cbInvite.IsChecked.Value.ToString().ToLower();
+            user_cfg.InviteFrom = cbInviteFrom.IsChecked.Value.ToString().ToLower();
+            user_cfg.InviteFromMeaning = tbInviteFrom.Text;
+            user_cfg.InviteTo = cbInviteTo.IsChecked.Value.ToString().ToLower();
+            user_cfg.InviteToMeaning = tbInviteTo.Text;
+            user_cfg.Appoint = cbAppoint.IsChecked.Value.ToString().ToLower();
+            user_cfg.AppointTo = cboxAppointTo.SelectedItem.ToString();
+
+            //сброс флагов изменения
+            tbLoginChanged = tbPassChanged = tbMinTimeChanged = tbMaxTimeChanged = tbFireLessChanged = tbInviteFromChanged = tbInviteToChanged = false;
+            //и копируем настройки в бота
+            BOT.user_cfg = user_cfg;
+        }
+
         //событие по изменению текста в textbox
         private void tbTextChanged(object sender, EventArgs e)
         {
@@ -887,25 +843,25 @@ namespace Nebo.Mobi.Bot
                     if (tbLogin.Text != "")
                         spPageHeadName.Text = tbLogin.Text;
                     else spPageHeadName.Text = "(Новый персонаж)";
-                    user_cfg.Login = tbLogin.Text;
+                    tbLoginChanged = true;
                     break;
                 case "tbPass":
-                    PassChanged = true;
+                    tbPassChanged = true;
                     break;
                 case "tbMinTime":
-                    user_cfg.MinTime = tbMinTime.Text;
+                    tbMinTimeChanged = true;
                     break;
                 case "tbMaxTime":
-                    user_cfg.MaxTime = tbMaxTime.Text;
+                    tbMaxTimeChanged = true;
                     break;
                 case "tbFireLess":
-                    user_cfg.FireLess = tbFireLess.Text;
+                    tbFireLessChanged = true;
                     break;
                 case "tbInviteFrom":
-                    user_cfg.InviteFromMeaning = tbInviteFrom.Text;
+                    tbInviteFromChanged = true;
                     break;
                 case "tbInviteTo":
-                    user_cfg.InviteToMeaning = tbInviteTo.Text;
+                    tbInviteToChanged = true;
                     break;
             }
         }
@@ -915,15 +871,42 @@ namespace Nebo.Mobi.Bot
         {
             switch ((sender as Control).Name)
             {
+                case "tbLogin":
+                    if(tbLoginChanged)
+                        user_cfg.Login = tbLogin.Text;
+                    break;
                 case "tbPass":
-                    if (PassChanged)
+                    if (tbPassChanged)
                     {
                         tbPass.Password = Crypto.EncryptStr(tbPass.Password);
                         user_cfg.Pass = tbPass.Password;
-                        PassChanged = false;
                     }
                     break;
+                case "tbMinTime":
+                    if (tbMinTimeChanged)
+                        user_cfg.MinTime = tbMinTime.Text;                                       
+                    break;
+                case "tbMaxTime":
+                    if(tbMaxTimeChanged)
+                        user_cfg.MaxTime = tbMaxTime.Text;
+                    break;
+                case "tbFireLess":
+                    if(tbFireLessChanged)
+                        user_cfg.FireLess = tbFireLess.Text;
+                    break;
+                case "tbInviteFrom":
+                    if(tbInviteFromChanged)
+                        user_cfg.InviteFromMeaning = tbInviteFrom.Text;
+                    break;
+                case "tbInviteTo":
+                    if(tbInviteToChanged)
+                        user_cfg.InviteToMeaning = tbInviteTo.Text;
+                    break;
             }
+
+            //если хоть что-то поменялось - обновляем конфиг
+            if (tbLoginChanged || tbPassChanged || tbMinTimeChanged || tbMaxTimeChanged || tbFireLessChanged || tbInviteFromChanged || tbInviteToChanged)
+                SaveUserConfig();
         }
 
         //вывод информации о персонаже при наведении
@@ -1005,13 +988,13 @@ namespace Nebo.Mobi.Bot
             gOpenedFloor.Orientation = Orientation.Horizontal;
             gInvited.Orientation = Orientation.Horizontal;
 
-            tbAction.Text = string.Format("Всего прогонов: {0}\n", Action_Count);
+            tbAction.Text = string.Format("Всего прогонов: {0}\n", BOT.Action_Count);
             gROOT.Children.Add(tbAction);
 
             iLift.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/lift.png", UriKind.Absolute));
             iLift.Width = 16;
             iLift.Height = 16;
-            tbLift.Text = string.Format("Доставлено пассажиров: {0}", Lift_Count);
+            tbLift.Text = string.Format("Доставлено пассажиров: {0}", BOT.Lift_Count);
             tbLift.Margin = new Thickness(10, 0, 0, 0);
             gLift.Children.Add(iLift);
             gLift.Children.Add(tbLift);
@@ -1020,7 +1003,7 @@ namespace Nebo.Mobi.Bot
             iBucks.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/mn_gold.png", UriKind.Absolute));
             iBucks.Width = 16;
             iBucks.Height = 16;
-            tbBucks.Text = string.Format("Собрано баксов: {0}", Bucks_Count);
+            tbBucks.Text = string.Format("Собрано баксов: {0}", BOT.Bucks_Count);
             tbBucks.Margin = new Thickness(10, 0, 0, 0);
             gBucks.Children.Add(iBucks);
             gBucks.Children.Add(tbBucks);
@@ -1029,7 +1012,7 @@ namespace Nebo.Mobi.Bot
             iCoins.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/mn_iron.png", UriKind.Absolute));
             iCoins.Width = 16;
             iCoins.Height = 16;
-            tbCoins.Text = string.Format("Этажей, с которых собрана выручка: {0}", Coins_Count);
+            tbCoins.Text = string.Format("Этажей, с которых собрана выручка: {0}", BOT.Coins_Count);
             tbCoins.Margin = new Thickness(10, 0, 0, 0);
             gCoins.Children.Add(iCoins);
             gCoins.Children.Add(tbCoins);
@@ -1038,7 +1021,7 @@ namespace Nebo.Mobi.Bot
             iMerch.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/st_stocked.png", UriKind.Absolute));
             iMerch.Width = 16;
             iMerch.Height = 16;
-            tbMerch.Text = string.Format("Этажей, на которых выложен товар: {0}", Merch_Count);
+            tbMerch.Text = string.Format("Этажей, на которых выложен товар: {0}", BOT.Merch_Count);
             tbMerch.Margin = new Thickness(10, 0, 0, 0);
             gMerch.Children.Add(iMerch);
             gMerch.Children.Add(tbMerch);
@@ -1047,7 +1030,7 @@ namespace Nebo.Mobi.Bot
             iBuy.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/tb_empty.png", UriKind.Absolute));
             iBuy.Width = 16;
             iBuy.Height = 16;
-            tbBuy.Text = string.Format("Этажей, на которых закуплен товар: {0}", Buy_Count);
+            tbBuy.Text = string.Format("Этажей, на которых закуплен товар: {0}", BOT.Buy_Count);
             tbBuy.Margin = new Thickness(10, 0, 0, 0);
             gBuy.Children.Add(iBuy);
             gBuy.Children.Add(tbBuy);
@@ -1056,7 +1039,7 @@ namespace Nebo.Mobi.Bot
             iKilled.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/users_minus.png", UriKind.Absolute));
             iKilled.Width = 16;
             iKilled.Height = 16;
-            tbKilled.Text = string.Format("Выселено дармоедов: {0}", Killed_Count);
+            tbKilled.Text = string.Format("Выселено дармоедов: {0}", BOT.Killed_Count);
             tbKilled.Margin = new Thickness(10, 0, 0, 0);
             gKilled.Children.Add(iKilled);
             gKilled.Children.Add(tbKilled);
@@ -1065,7 +1048,7 @@ namespace Nebo.Mobi.Bot
             iNewWorker.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/users_plus.png", UriKind.Absolute));
             iNewWorker.Width = 16;
             iNewWorker.Height = 16;
-            tbNewWorker.Text = string.Format("Нанято новых рабочих: {0}", New_Worker_Count);
+            tbNewWorker.Text = string.Format("Нанято новых рабочих: {0}", BOT.New_Worker_Count);
             tbNewWorker.Margin = new Thickness(10, 0, 0, 0);
             gNewWorker.Children.Add(iNewWorker);
             gNewWorker.Children.Add(tbNewWorker);
@@ -1074,7 +1057,7 @@ namespace Nebo.Mobi.Bot
             iOpenedFloor.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/hd_nebo.png", UriKind.Absolute));
             iOpenedFloor.Width = 16;
             iOpenedFloor.Height = 16;
-            tbOpenedFloor.Text = string.Format("Открыто этажей: {0}", Opened_Floor_Count);
+            tbOpenedFloor.Text = string.Format("Открыто этажей: {0}", BOT.Opened_Floor_Count);
             tbOpenedFloor.Margin = new Thickness(10, 0, 0, 0);
             gOpenedFloor.Children.Add(iOpenedFloor);
             gOpenedFloor.Children.Add(tbOpenedFloor);
@@ -1083,255 +1066,22 @@ namespace Nebo.Mobi.Bot
             iInvited.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/invite.png", UriKind.Absolute));
             iInvited.Width = 16;
             iInvited.Height = 16;
-            tbInvited.Text = string.Format("Приглашено игроков: {0}", Invited_Count);
+            tbInvited.Text = string.Format("Приглашено игроков: {0}", BOT.Invited_Count);
             tbInvited.Margin = new Thickness(10, 0, 0, 0);
             gInvited.Children.Add(iInvited);
             gInvited.Children.Add(tbInvited);
             gROOT.Children.Add(gInvited);
             return gROOT;
         }
-
-        //создание страницы с отчетом
-        private void CreateHTMLPage(string res)
-        {
-            Stat = res.Split('\n');
-
-            for (int i = 0; i < Stat.Length; i++)
-            {
-                if (Stat[i].Contains("<div class=\"prg\""))
-                {
-                    Stat[i] = Parse(HTML, "<div class=\"prg\"");
-                }
-
-                if (Stat[i].Contains("/icons/user/"))
-                {
-                    Stat[i] = "<img src=\"http://static.nebo.mobi/images/icons/user/" + user_cfg.Avatar + "\" width=\"16\" height=\"16\" alt=\"u\"\r";
-                }
-                if (Stat[i].Contains("UserName"))
-                {
-                    Stat[i] = "<UserName>" + user_cfg.Login + "</UserName>\r";
-                }
-
-                if (Stat[i].Contains("UserCoins"))
-                {
-                    Stat[i] = "<UserCoins>" + User_Coins + "</UserCoins>\r";
-                }
-
-                if (Stat[i].Contains("UserBucks"))
-                {
-                    Stat[i] = "<UserBucks>" + User_Bucks + "</UserBucks>\r";
-                }
-
-                if (User_City != "")
-                {
-                    if (Stat[i].Contains("UserCity"))
-                    {
-                        Stat[i] = "<UserCity>" + User_City + "</UserCity>\r";
-                    }
-
-                    if (Stat[i].Contains("CityRole"))
-                    {
-                        Stat[i] = "<CityRole>" + City_Role + "</CityRole>\r";
-                    }
-                }
-
-                else
-                {
-                    if (Stat[i].Contains("UserCity"))
-                    {
-                        Stat[i] = "<UserCity></UserCity>\r";
-                    }
-
-                    if (Stat[i].Contains("CityRole"))
-                    {
-                        Stat[i] = "<CityRole> (без города) </CityRole>\r";
-                    }
-                }
-
-                if (Stat[i].Contains("UserLevel"))
-                {
-                    Stat[i] = "<UserLevel>" + User_Level + "</UserLevel>\r";
-                }                
-
-                if (Stat[i].Contains("UserFloors"))
-                {
-                    Stat[i] = "<UserFloors>" + User_Floors + "</UserFloors>\r";
-                }
-
-            }
-
-            CURRENT_HTML = "";
-            foreach (string ss in Stat)
-                CURRENT_HTML += ss;
-
-            PageCreated = true;
-        }
-
-
-        //получение полного списка этажей
-        private void ConnectAndGoHome()
-        {
-            //подключаемся и переходим на Главную и раскрываем этажи
-            Connect();
-            GetHomePage();
-        }
-
-        //тупо получение главного экрана и проверка на открытие этажей
-        private void GetHomePage()
-        {
-            string ab;
-            ClickLink(HOME_LINK, "");
-
-            //получаем ссылку "Показать этажи"
-            ab = Parse(HTML, "Показать этажи");
-            if (ab != "")
-            {
-                ab = ab.Substring(49);
-                ab = ab.Remove(ab.IndexOf("\""));
-
-                ClickLink(ab, "");
-                Thread.Sleep(rnd.Next(100, 300));
-            }
-        }
-
-        //получаем уровень и финансы
-        private void GetInfo()
-        {
-            User_Bucks = User_Coins = User_Level = User_City = User_Floors = City_Role = "";
-            GetHomePage();
-
-            string ab = Parse(HTML, "mn_iron.png");
-            if (ab != "")
-            {
-                //ab = ab.Substring(122);
-                ab = ab.Substring(99);
-                ab = ab.Remove(ab.IndexOf('<'));
-                User_Coins = ab.Replace("&#039;", "'");
-            }
-
-            ab = Parse(HTML, "mn_gold.png");
-            if (ab != "")
-            {
-                //ab = ab.Substring(122);
-                ab = ab.Substring(99);
-                ab = ab.Remove(ab.IndexOf('<'));
-                User_Bucks = ab.Replace("&#039;", "'");
-            }
-
-            //получаем уровень
-            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            int i;
-            for (i = 0; i < str.Length; i++)
-            {
-                if (str[i].Contains("уровень"))
-                {
-                    //фиксируем строчку с кубком, днюхой или еще каким дерьмом
-                    if (!str[i].Contains("star.png"))
-                        ab = str[i - 1];
-                    //ииначе - как обычный игрок в обычный день
-                    else
-                        ab = str[i];
-
-                    //ab = ab.Substring(106);
-                    ab = ab.Substring(83);
-                    ab = ab.Remove(ab.IndexOf('<'));
-                    break;
-                }
-            }
-            User_Level = ab;// + " уровень";
-            ab = "";
-
-            //получаем аватар
-            for (i = 0; i < str.Length; i++)
-            {
-                if (str[i].Contains(user_cfg.Login))
-                {
-                    ab = str[i - 1];
-                    //ab = ab.Substring(58);
-                    ab = ab.Substring(35);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-                    break;
-                }
-            }
-
-            user_cfg.Avatar = ab;
-            ab = "";
-
-            //получаем количество этажей
-            for (i = 0; i < str.Length; i++)
-            {
-                if (str[i].Contains("class=\"flhdr\""))
-                {
-                    ab = str[i + 1];
-                    ab = ab.Substring(15);
-                    ab = ab.Remove(ab.IndexOf('.'));
-                    break;
-                }
-            }
-            User_Floors = ab;
-            ab = "";
-
-            //Thread.Sleep(rnd.Next(500, 1000));
-
-            //лезем в Мой город 
-            for (i = 0; i < str.Length; i++)
-            {
-                if (str[i].Contains("Мой город"))
-                {
-                    ab = str[i];
-                    ab = ab.Substring(45);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-                    ClickLink(ab, "");
-
-                    str = HTML.Split('\n');
-
-                    //ищем строку с городом
-                    for (int j = 0; j < str.Length; j++)
-                    {
-                        if (str[j].Contains("&laquo;"))
-                        {
-                            ab = str[j];
-                            ab = ab.Substring(42);
-                            ab = ab.Remove(ab.IndexOf('<'));
-
-                            //метим название города
-                            User_City = ab;
-                            ab = "";
-                            break;
-                        }
-                    }
-
-                    //ищем строку с должностью
-                    for (int j = 0; j < str.Length; j++)
-                    {
-                        if (str[j].Contains(user_cfg.Login) && !str[j + 1].Contains("уровень"))
-                        {
-                            //пропускаем строку с шарами (днюха)
-                            if (str[j + 1].Contains("st_builded.png")) j++;
-                            ab = str[j + 1];
-                            ab = ab.Substring(26);
-                            ab = ab.Remove(ab.IndexOf('<'));
-
-                            //метим название города
-                            City_Role = "- " + ab;
-                            ab = "";
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
-
-            CreateHTMLPage(Properties.Resources.stat);
-        }
+        
 
         //обновление содержания формы
         private void UpdForm()
         {
             DateTime first = DateTime.Now;
-            if (Bot.IsAlive)
+            if (BOT.GetBotThread().IsAlive)
             {
-                switch (CONNECT_STATUS)
+                switch (BOT.CONNECT_STATUS)
                 {
                     case " Подключение к серверу ":
                         iStatus.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/connect.png", UriKind.Absolute));
@@ -1340,7 +1090,7 @@ namespace Nebo.Mobi.Bot
                         iStatus.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/connect.png", UriKind.Absolute));
                         break;
                 }
-                switch (ACTION_STATUS)
+                switch (BOT.ACTION_STATUS)
                 {
                     case "Открываю этажи":
                         iStatus.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/st_builded.png", UriKind.Absolute));
@@ -1375,20 +1125,20 @@ namespace Nebo.Mobi.Bot
                         iStatus.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/waiting.png", UriKind.Absolute));
             }
 
-            lStatus.Text = CONNECT_STATUS + ACTION_STATUS;
+            lStatus.Text = BOT.CONNECT_STATUS + BOT.ACTION_STATUS;
 
             //отображаем страницу в раузере            
-            if (PageCreated)
+            if (BOT.PageCreated)
             {
-                wbAction.DocumentText = CURRENT_HTML;
-                PageCreated = false;
+                wbAction.DocumentText = BOT.CURRENT_HTML;
+                BOT.PageCreated = false;
             }
 
 
             if (user_cfg.Avatar != "")
                 spPageHeadImg.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/" + user_cfg.Avatar, UriKind.Absolute));
 
-            if (!Bot.IsAlive)
+            if (!BOT.GetBotThread().IsAlive)
             {
                 bStart.IsEnabled = true;
                 //wbAction.NavigateToString(CURRENT_HTML);
@@ -1396,686 +1146,59 @@ namespace Nebo.Mobi.Bot
             }
             //this.Text = NAME + CONNECT_STATUS + ACTION_STATUS;
 
-            if (COMMUTATION_STR != "")
+            while (BOT.COMMUTATION_STR.Count != 0)
             {
-                LOGBox.AppendText(COMMUTATION_STR + Environment.NewLine);
+                LOGBox.AppendText(BOT.COMMUTATION_STR[0] + Environment.NewLine);
                 LOGBox.ScrollToEnd();
-                COMMUTATION_STR = "";
+                BOT.COMMUTATION_STR.RemoveAt(0);
             }
-            if (CONNECT_STATUS.Contains("Стоп"))
+            if (BOT.CONNECT_STATUS.Contains("Стоп"))
             {
+                bot_timer.Interval = BOT.BotTimeSleep;
+                timeleft = (int)(bot_timer.Interval.TotalMilliseconds);
                 bot_timer.Start();
-                CONNECT_STATUS = "";
-                ACTION_STATUS = "";
+                BOT.CONNECT_STATUS = "";
+                BOT.ACTION_STATUS = "";
                 //wbAction.NavigateToString(CURRENT_HTML);
             }
 
             if (timeleft > 0)
             {
-                timeleft -= (100 + (DateTime.Now - first).Milliseconds);
+                timeleft -= 100 + (DateTime.Now - first).Milliseconds;
                 int minutes = (int)TimeSpan.FromMilliseconds(timeleft).TotalMinutes;
                 int seconds = (int)TimeSpan.FromMilliseconds(timeleft).TotalSeconds - minutes * 60;
-                CONNECT_STATUS = string.Format("Жду   {0}мин : {1:d2}сек\n\n", minutes, seconds);
+                BOT.CONNECT_STATUS = string.Format("Жду   {0}мин : {1:d2}сек\n\n", minutes, seconds);
             }
-        }
-
-
-        //список дел бота
-        private void StartBot()
-        {
-            //сбрасываем таймер обратного отсчета
-            timeleft = 0;
-
-            //подключаеся, идем на главную, раскрываем этажи
-            ConnectAndGoHome();
-            Thread.Sleep(rnd.Next(100, 300));
-
-            if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                GetInfo(); //получаем инфу до прогона
-
-            //открываем этажи
-            TryToOpenFloor();
-
-            //делаем 2 прогона (мб что-то доставят или купят випы)
-            for (int i = 0; i < 2; i++)
-            {
-                //собираем награды
-                if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
-                {
-                    GetReavrd();
-                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                        GetInfo();
-                }
-                //шмонаем гостиницу
-                FindWorkers();
-                if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
-                {
-                    GetReavrd();
-                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                        GetInfo();
-                }
-                //собираем выручку
-                CollectMoney();
-                if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
-                {
-                    GetReavrd();
-                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                        GetInfo();
-                }
-                if (!Convert.ToBoolean(user_cfg.DoNotPut))
-                {
-                    //выкладываем товары
-                    PutMerch();
-                    if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
-                    {
-                        GetReavrd();
-                        if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                            GetInfo();
-                    }
-                }
-                //закупаем товары
-                Buy();
-                if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
-                {
-                    GetReavrd();
-                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                        GetInfo();
-                }
-                //катаем лифт
-                GoneLift();
-
-                //зовем народ
-                if(Convert.ToBoolean(user_cfg.Invite))
-                    InviteToCity();
-            }
-            Action_Count++; //считаем оба прогона за 1
-
-            if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                GetInfo();      //получем инфу после прогона
-
-            RelaxMan();
-        }
-
-        private void RelaxMan()
-        {
-            int min_time = 0, max_time = 0;
-
-            //защита от дурака
-            try
-            {
-                min_time = Convert.ToInt32(user_cfg.MinTime);
-            }
-            catch
-            {
-                ThreadAbort("ОШИБКА. Поле \"От:\" должно содержать значение в диапазоне от 1 до 200.\n");
-            }
-
-            if (min_time < 1 || min_time > 200)
-                ThreadAbort("ОШИБКА. Поле \"От:\" должно содержать значение в диапазоне от 1 до 200.\n");
-
-            try
-            {
-                max_time = Convert.ToInt32(user_cfg.MaxTime);
-            }
-            catch
-            {
-                ThreadAbort("ОШИБКА. Поле \"До:\" должно содержать значение в диапазоне от 1 до 200.\n");
-            }
-
-            if (max_time < 1 || max_time > 200)
-                ThreadAbort("ОШИБКА. Поле \"До:\" должно содержать значение в диапазоне от 1 до 200.\n");
-
-            if (max_time < min_time)
-                ThreadAbort("ОШИБКА. Значение поля \"От:\" не может быть меньше значения поля \"До:\".\n");
-
-            //получаем рандомное время ожидания
-            bot_timer.Interval = TimeSpan.FromMilliseconds(rnd.Next(min_time * 60, max_time * 60) * 1000);
-            //bot_timer.Interval = TimeSpan.FromMilliseconds((bot_timer.Interval.TotalMilliseconds * 0.001) * 1000);
-            CONNECT_STATUS = " Стоп ";
-            timeleft = (int)(bot_timer.Interval.TotalMilliseconds);
-            int minutes = (int)TimeSpan.FromMilliseconds(timeleft).TotalMinutes;
-            int seconds = (int)TimeSpan.FromMilliseconds(timeleft).TotalSeconds - minutes * 60;
-            COMMUTATION_STR += string.Format("Жду   {0}", string.Format("{0}мин : {1:d2}сек\n\n", minutes, seconds));
-        }
-
-        //жмакнуть по ссылке
-        private void ClickLink(string link, string param)
-        {
-            webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/39.0");
-            webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-            //webClient.Headers[HttpRequestHeader.Host] = SERVER;
-            webClient.Encoding = Encoding.UTF8;
-
-            //пробуем кликнуть на ссылку
-            try
-            {
-                HTML = webClient.UploadString(SERVER + link, param);
-            }
-            catch(Exception ex1)
-            {
-                //если ошибка сервера - пробуем подождать и снова кликнуть
-                string s = ex1.Message;
-
-                //если разорвано соединение - реконнект
-                if (s.Contains("Базовое соединение закрыто"))
-                {
-                    try
-                    {
-                        Thread.Sleep(rnd.Next(500, 800));
-                        ConnectAndGoHome();
-                    }
-                    catch (Exception ex2)
-                    {
-                        ThreadSleep("ОШИБКА. " + ex2.Message + "\n");
-                    }
-                }
-
-                //иначе пробуем подождать и снова кликнуть
-                else
-                {
-                    try
-                    {
-                        Thread.Sleep(rnd.Next(500, 800));
-                        HTML = webClient.UploadString(SERVER + link, param);
-                    }
-                    catch (Exception ex2)
-                    {
-                        ThreadSleep("ОШИБКА. " + ex2.Message + "\n");
-                    }
-                }
-            }
-
-
-            //для отмороженных акков - пока не работает
-            if (HTML.Contains("pumpit") || HTML.Contains("одноклассники"))
-            {
-                ThreadAbort("ОШИБКА. Аккаунты данного типа не поддерживаются.\n");
-            }
-
-            //если слишком быстро
-            if (HTML.Contains("Вы попытались загрузить"))
-            {
-                Thread.Sleep(rnd.Next(100, 300));
-                try
-                {
-                    Thread.Sleep(rnd.Next(500, 800));
-                    HTML = webClient.UploadString(SERVER + link, param);
-                }
-                catch (Exception ex)
-                {
-                    ThreadSleep("ОШИБКА. " + ex.Message + "\n");
-                }
-            }
-            else if(HTML.Contains("502 Bad Gateway"))
-            {
-                Thread.Sleep(rnd.Next(100, 300));
-                GetHomePage();
-            }
-
-            Thread.Sleep(rnd.Next(100, 300));
-        }
-
-        //подключение к серверу
-        private void Connect()
-        {
-            Entery();
-
-            CONNECT_STATUS = " Попытка авторизции ";
-            string param = string.Format("id5_hf_0=&login={0}&password={1}&%3Asubmit=%D0%92%D1%85%D0%BE%D0%B4", user_cfg.Login.Replace(' ', '+'), Crypto.DecryptStr(user_cfg.Pass));
-
-            ClickLink(LINK, param);
-
-            if (HTML.Contains("Поле 'Имя в игре' обязательно для ввода.") || HTML.Contains("Неверное имя или пароль") || !HTML.Contains(user_cfg.Login))
-            {
-                ThreadAbort("ОШИБКА. Неверный логин или пароль.\n");
-            }
-            CONNECT_STATUS = " Онлайн ";
-
-            //фиксируем ссылку на Главную
-            HOME_LINK = Parse(HTML, "/home");
-            HOME_LINK = HOME_LINK.Remove(0, HOME_LINK.IndexOf('/') + 1);
-            HOME_LINK = HOME_LINK.Remove(HOME_LINK.IndexOf('\"') - 1);
-
-            ACTION_STATUS = "Анализ ситуации";
-            Thread.Sleep(rnd.Next(100, 300));
-        }
-
-        //метод сброса потока бота
-        private void ThreadAbort(string reason)
-        {
-            COMMUTATION_STR = reason;
-            CONNECT_STATUS = "";
-            ACTION_STATUS = "";
-            Thread.CurrentThread.Abort();
-        }
-
-        //метод торможения потока бота
-        private void ThreadSleep(string reason)
-        {
-            COMMUTATION_STR = reason;
-            CONNECT_STATUS = "";
-            ACTION_STATUS = "";
-            RelaxMan();
-            Thread.CurrentThread.Abort();
-            //Bot.Start();
-        }
-
-        //входим на домашнюю станицу получаем ссылку на форму входа
-        private void Entery()
-        {
-            CONNECT_STATUS = " Подключение к серверу ";
-
-            ClickLink("login", "");
-            Thread.Sleep(rnd.Next(100, 300));
-
-
-            LINK = Parse(HTML, "<form action=");
-            try
-            {
-                LINK = LINK.Substring(14, 107);
-            }
-            catch (Exception ex)
-            {
-                ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-            }
-        }
-
-        //парсит страницу, возвращает строку с ссылкой по маске
-        private string Parse(string page, string mask)
-        {
-            string[] str = page.Split((char)'\n');
-            string ab = "";
-            foreach (string a in str)
-            {
-                if (a.Contains(mask))
-                {
-                    ab = a;
-                    break;
-                }
-            }
-            return ab;
-        }
-
-        //проверяем, надо ли гонять лифт. возвращает ссылку на лифт если надо или пустоту если нет
-        private string TryLift()
-        {
-            string[] str = HTML.Split((char)'\n');
-            string ab = "";
-            foreach (string a in str)
-            {
-                if (a.Contains("/images/icons/tb_lift2.png")) //если пусто
-                    break;
-                else if (a.Contains("/images/icons/tb_lift.png") || a.Contains("/images/icons/tb_lift_vip.png")) //если есть народ или ВИПы
-                {
-                    ab = a.Substring(21, 48);
-                    break;
-                }
-            }
-            return ab;
-        }
-
-        //катаем лифт и получаем очередную ссылку
-        private string GetLiftLink(string lnk)
-        {
-            ClickLink(lnk, "");
-
-            string ab = Parse(HTML, "Поднять");
-            if (ab != "")
-            {
-                //ab = ab.Substring(111);
-                ab = ab.Substring(88);
-                if (ab.IndexOf('\"') != -1) ab = ab.Remove(ab.IndexOf('\"'));
-            }
-            else
-            {
-                ab = Parse(HTML, "Получить");
-                if (ab != "")
-                {
-                    ab = ab.Substring(27);
-                    if (ab.IndexOf('\"') != -1) ab = ab.Remove(ab.IndexOf('\"'));
-
-                    //считаем пассажира
-                    lift_count++;
-                    Lift_Count++;
-
-                    //если дал бакс - считаем
-                    if (HTML.Contains("/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>1</span></b>"))
-                    {
-                        bucks_count++;
-                        Bucks_Count++;
-                    }
-                }
-            }
-            return ab;
-        }
+        }        
 
 
         //событие таймера
         private void bot_timer_Tick(object sender, EventArgs e)
         {
+            //сбрасываем таймер обратного отсчета
+            timeleft = 0;
+
             bot_timer.Stop();
             bStart.IsEnabled = false;
             bStop.IsEnabled = true;
-            Bot = new Thread(StartBot);
             ref_timer.Start();
-            Bot.Start();
+
+            BOT.ResetThread();
+            BOT.GetBotThread().Start();
         }
-
-        //основной метод получения награды (баксов)
-        private void GetReavrd()
-        {
-            GetHomePage();
-            //получаем ссылку на квесты и кликаем если есть награда
-            string ab = TryRevard();
-            if (ab != "")
-            {
-                ACTION_STATUS = "Собираю награду";
-                ClickLink(ab, "");
-                Thread.Sleep(rnd.Next(100, 300));
-
-                bucks_count = 0;
-
-                //пока есть кнопки "Получить награду!" - жмакаем
-                string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                int i;
-                for (i = 0; i < str.Length; i++)
-                {
-                    if (str[i].Contains("Получить награду!"))
-                    {
-                        //фиксируем строчку со ссылкой на получение
-                        ab = str[i];
-
-                        //считаем награду
-                        string stat = str[i - 3];
-                        if (stat.Contains("Бонус X2!"))
-                            stat = str[i - 6];
-                        //stat = stat.Substring("<span><img src=\"http://static.nebo.mobi/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>".Length);
-                        stat = stat.Substring("<span><img src=\"/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>".Length);
-                        stat = stat.Remove(stat.IndexOf('<'));
-                        bucks_count += Convert.ToInt32(stat);
-
-                        //получаем ссылку, кликаем и ждем
-                        ab = ab.Substring("<div><a class=\"btng btn60\" href=\"".Length);
-                        ab = ab.Remove(ab.IndexOf('\"'));
-                        ClickLink(ab, "");
-                        Thread.Sleep(rnd.Next(100, 300));
-                    }
-                }
-                Bucks_Count += bucks_count;
-                ACTION_STATUS = "Анализ ситуации";
-                COMMUTATION_STR = string.Format("{0}  -  Собрано наградных баксов: {1}.", GetTime(), bucks_count);
-
-                GetHomePage();
-            }
-        }
-
-        //проверка- есть ли награда
-        private string TryRevard()
-        {
-            string ab = Parse(HTML, "tb_quests.png");
-            if (ab != "")
-            {
-                ab = ab.Substring(27);
-                ab = ab.Remove(ab.IndexOf('\"'));
-            }
-            return ab;
-        }
-
-        //основной метод отправки лифта
-        private void GoneLift()
-        {
-            GetHomePage();
-
-            //проверяем, надо ли гнать лифт
-            string ab = TryLift();
-
-            lift_count = 0;
-            bucks_count = 0;
-            if (ab != "")
-            {
-                ACTION_STATUS = "Катаю лифт";
-
-                while (ab != "")
-                {
-                    ab = GetLiftLink(ab);
-                    Thread.Sleep(rnd.Next(100, 300));
-                }
-                //ACTION_STATUS = "";
-                COMMUTATION_STR = string.Format("{0}  -  Доставлено пассажиров: {1}.", GetTime(), lift_count);
-                if (bucks_count != 0) COMMUTATION_STR += string.Format("\n{0}  -  Собрано чаевых баксов: {1}.", GetTime(), bucks_count);
-            }
-            ACTION_STATUS = "Анализ ситуации";
-            Thread.Sleep(rnd.Next(100, 300));
-        }
-
-        //проверка есть ли выручка
-        private string TryMoney()
-        {
-            string ab = Parse(HTML, "Собрать выручку!");
-            if (ab != "")
-            {
-                //ab = ab.Substring(114);
-                ab = ab.Substring(91);
-                ab = ab.Remove(ab.IndexOf('\"'));
-            }
-            return ab;
-        }
-
-        //переход поссылке сбора выручки и получения новой ссылки сбора выручки
-        private string GetMoneyLink(string lnk)
-        {
-            ClickLink(lnk, "");
-
-            string ab = Parse(HTML, "Собрать выручку!");
-            if (ab != "")
-            {
-                //ab = ab.Substring(114);
-                ab = ab.Substring(91);
-                ab = ab.Remove(ab.IndexOf('\"'));
-                coins_count++;
-                Coins_Count++;
-            }
-            return ab;
-        }
-
-        //базовый меод сбора выручки
-        private void CollectMoney()
-        {
-            //ищем ссылку сбора выручки
-            GetHomePage();
-
-            string ab = TryMoney();
-            coins_count = 0;
-            if (ab != "")
-            {
-                ACTION_STATUS = "Собираю выручку";
-                coins_count = 1;
-                Coins_Count++;
-                while (ab != "")
-                {
-                    ab = GetMoneyLink(ab);
-                    Thread.Sleep(rnd.Next(100, 300));
-                }
-
-                //ACTION_STATUS = "";
-                COMMUTATION_STR = string.Format("{0}  -  Этажей, с которых собрана выручка: {1}.", GetTime(), coins_count);
-            }
-            ACTION_STATUS = "Анализ ситуации";
-            Thread.Sleep(rnd.Next(100, 300));
-        }
-
-        //проверяем есть ли чего выложить
-        private string TryPutMerch()
-        {
-            string ab = Parse(HTML, "Выложить товар");
-            if (ab != "")
-            {
-                //ab = ab.Substring(117);
-                ab = ab.Substring(94);
-                ab = ab.Remove(ab.IndexOf('\"'));
-            }
-            return ab;
-        }
-
-        //переход поссылке сбора выручки и получения новой ссылки сбора выручки
-        private string GetMerchLink(string lnk)
-        {
-            ClickLink(lnk, "");
-
-            string ab = Parse(HTML, "Выложить товар");
-            if (ab != "")
-            {
-                //ab = ab.Substring(117);
-                ab = ab.Substring(94);
-                ab = ab.Remove(ab.IndexOf('\"'));
-                merch_count++;
-                Merch_Count++;
-            }
-            return ab;
-        }
-
-        //базовый меод сбора выручки
-        private void PutMerch()
-        {
-            GetHomePage();
-
-            //ищем ссылку сбора выручки
-            string ab = TryPutMerch();
-            merch_count = 0;
-            if (ab != "")
-            {
-                ACTION_STATUS = "Выкладываю товар";
-                merch_count = 1;
-                Merch_Count++;
-                while (ab != "")
-                {
-                    ab = GetMerchLink(ab);
-                    Thread.Sleep(rnd.Next(100, 300));
-                }
-
-                //ACTION_STATUS = "";
-                COMMUTATION_STR = string.Format("{0}  -  Этажей, на которых выложен товар: {1}.", GetTime(), merch_count);
-            }
-            ACTION_STATUS = "Анализ ситуации";
-            Thread.Sleep(rnd.Next(100, 300));
-        }
-
-
-        //проверяем есть ли чего закупить
-        private string TryBuy()
-        {
-            string ab = "";
-            GetHomePage();
-
-            //простейший случай - постоянный товарооборот
-            if (!Convert.ToBoolean(user_cfg.DoNotPut))
-            {
-                ab = Parse(HTML, "Закупить товар");
-                if (ab != "")
-                {
-                    //ab = ab.Substring(120);
-                    ab = ab.Substring(97);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-                }
-            }
-
-            //а теперь если ждем инвесторов и ничего не выкладываем
-            else
-            {
-                string[] str = HTML.Split((char)'\n');
-                int i;
-                for (i = 0; i < str.Length; i++)
-                {
-                    //если есть чего закупать и ничего не доставляется
-                    if (str[i].Contains("st_empty.png") && !(str[i].Contains("st_stocking.png")))
-                        break;
-                }
-
-                if (i != str.Length) //типа если нашлось
-                {
-                    //переходим к строке с ссылкой на этаж
-                    i += 4;
-
-                    //получаем строку с сылкой на этаж
-                    ab = str[i];
-                    ab = ab.Substring(9);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-                }
-            }
-            return ab;
-        }
-
-        //переход поссылке сбора выручки и получения новой ссылки сбора выручки
-        private string GetBuyLink(string lnk)
-        {
-            ClickLink(lnk, "");
-
-            string[] str = HTML.Split((char)'\n');
-            string ab = "";
-            foreach (string ss in str)
-            {
-                //вычленяем ссылку на самый дорогой
-                if (ss.Contains("Закупить за"))
-                {
-                    ab = ss.Substring(21);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-                }
-            }
-
-            //сама закупка
-            Thread.Sleep(rnd.Next(100, 300));
-
-            ClickLink(ab, "");
-
-            ab = TryBuy();
-            return ab;
-        }
-
-        //базовый меод закупки товара
-        private void Buy()
-        {
-            GetHomePage();
-
-            //ищем ссылку сбора выручки
-            string ab = TryBuy();
-            buy_count = 0;
-            if (ab != "")
-            {
-                ACTION_STATUS = "Закупаю товар";
-                while (ab != "")
-                {
-                    ab = GetBuyLink(ab);
-                    buy_count++;
-                    Buy_Count++;
-                    Thread.Sleep(rnd.Next(100, 300));
-                }
-
-                //ACTION_STATUS = "";
-                COMMUTATION_STR = string.Format("{0}  -  Этажей, на которых закуплен товар: {1}.", GetTime(), buy_count);
-            }
-            ACTION_STATUS = "Анализ ситуации";
-            Thread.Sleep(rnd.Next(100, 300));
-        }
-
-        private string GetTime()
-        {
-            return string.Format(@"{0:d2}.{1:d2}.{2:d4}  [{3:d2}:{4:d2}:{5:d2}]",
-                                 DateTime.Now.Day, DateTime.Now.Month, DateTime.Now.Year, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
-        }
-
 
         //остановка бота и очистка синхрострок
         public void StopBotThread()
         {
-            Bot.Abort();
-            CONNECT_STATUS = "";
-            ACTION_STATUS = "";
+            BOT.GetBotThread().Abort();
+            BOT.CONNECT_STATUS = "";
+            BOT.ACTION_STATUS = "";
             bot_timer.Stop();
             ref_timer.Stop();
             bStart.IsEnabled = true;
             bStop.IsEnabled = false;
             timeleft = 0;
-            User_Level = User_Coins = User_Bucks = "";
+            BOT.User_Level = BOT.User_Coins = BOT.User_Bucks = "";
             //TrayIcon.Text = "Nebo.Mobi.Bot ver. " + version;
             UpdForm();
             lStatus.Text = "Остановлен";
@@ -2088,511 +1211,16 @@ namespace Nebo.Mobi.Bot
             UpdForm();
         }
 
-        //тупо идем на главную, а затем в Гостиницу
-        private void GoHotel()
+        //вернуть поток бота (для главного окна)
+        public Thread GetBotThread()
         {
-            GetHomePage();
-
-            //идем в Гостиницу
-            string ab = "";
-            string[] str = HTML.Split((char)'\n');
-            for (int i = 0; i < str.Length; i++)
-            {
-                //получаем ссылку на Гостиницу
-                if (str[i].Contains("Гостиница"))
-                {
-                    ab = str[i - 2];
-                    ab = ab.Substring(23);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-                    break;
-                }
-            }
-
-            //идем в Гостиницу
-            ClickLink(ab, "");
+            return BOT.GetBotThread();
         }
 
-        //увольняем жильцов ниже заданного уровня
-        private void FindWorkers()
+        //вернуть конфиги юзера
+        public Config.User GetUserCfg()
         {
-            int i = 0;
-            string ab = "";
-            int bak_i = 0;
-
-            killed_count = 0;
-            new_worker_count = 0;
-            ACTION_STATUS = "Шмонаю гостиницу";
-
-            //идем в Гостиницу
-            GoHotel();
-
-            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            //начинаем зачистку
-
-            for (i = 0; i < str.Length; i++)
-            {
-
-                //анализ жильца
-                if (str[i].Contains("\" class=\"white\""))
-                {
-                    //получаем ссылку на чувака
-                    ab = str[i].Substring(17);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-
-
-                    //если дармоед - выкинуть
-                    if (!str[i + 7].Contains("(+)"))
-                    {
-                        int level_to_kill = 0;  //уровень, жильцов меньше которого выселять
-
-                        //защита от дурака
-                        try
-                        {
-                            level_to_kill = Convert.ToInt32(user_cfg.FireLess);
-                        }
-                        catch
-                        {
-                            ThreadAbort("ОШИБКА. Уровень должен быть от 1 до 9\n");
-                        }
-
-                        //если там число, но не в диапазоне 1:9
-                        if (level_to_kill <= 1 || level_to_kill >= 10)
-                            ThreadAbort("ОШИБКА. Уровень должен быть от 1 до 9\n");
-
-                        //получаем уровень и сверяем с заданным
-                        string rank = str[i + 2];
-                        rank = rank.Substring(17);
-                        rank = rank.Remove(1);
-                        int human_level = Convert.ToInt32(rank);
-
-                        //если уровень меньше заданного и стоит галочка выселения, или если он 9 и стоит галочка выселения, и есть (-)
-                        if (human_level < level_to_kill && Convert.ToBoolean(user_cfg.Fire) || human_level == 9 && Convert.ToBoolean(user_cfg.Fire9) && str[i + 7].Contains("(-)"))
-                        {
-                            Kill(ab);
-                            //а теперь результаты надо сбросить
-                            str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                            i = bak_i; //если остались (+)
-                            Thread.Sleep(rnd.Next(100, 300));
-                        }
-                    }
-                }
-            }
-
-            //иначе проверяем, не (+) ли он
-            for (i = 0; i < str.Length; i++)
-            {
-                //анализ жильца
-                if (str[i].Contains("\" class=\"white\""))
-                {
-                    //получаем ссылку на чувака
-                    ab = str[i].Substring(17);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-
-                    if(str[i + 7].Contains("(+)"))
-                    {
-                        bak_i = i + 7; //бекапим строку чтобы снова не начать с чуваком возиться
-
-                        int free = 0; //количество свободных мест в гостинице
-                        string ss = Parse(HTML, "Свободно: <b><span>");
-                        //ss = ss.Substring(103);
-                        ss = ss.Substring(80);
-                        ss = ss.Remove(ss.IndexOf('<'));
-
-                        try
-                        {
-                            free = Convert.ToInt32(ss);
-                        }
-                        catch (Exception ex)
-                        {
-                            ThreadSleep("ОШИБКА. " + ex.Message + '\n');
-                        }
-
-                        //пытаемся назначить на работу    
-                        //если назначен, то парсим страницу сначала
-                        if (GoToWork(ab, free))
-                        {
-                            i = 0;
-                            bak_i = 0;
-                            new_worker_count++;
-                            New_Worker_Count++;
-                        }
-                        //иначе - со строки (+) - т.е. со следующего парня
-                        else i = bak_i;
-
-                        //а теперь разбиваем новую страницу на строки
-                        str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                        Thread.Sleep(rnd.Next(100, 300));
-                    }
-                }
-            }
-            //крайние меры - обновление происходит быстрее формирования статуса
-            if (killed_count != 0 && new_worker_count != 0) COMMUTATION_STR = string.Format("{0}  -  Выселено дармоедов: {1}.\n{2}  -  Нанято новых рабочих: {3}.", GetTime(), killed_count, GetTime(), new_worker_count);
-            else if (killed_count != 0) COMMUTATION_STR = string.Format("{0}  -  Выселено дармоедов: {1}.", GetTime(), killed_count);
-            else if (new_worker_count != 0) COMMUTATION_STR = string.Format("{0}  -  Нанято новых рабочих: {1}.", GetTime(), new_worker_count);
-            ACTION_STATUS = "Анализ ситуации";
-            Thread.Sleep(rnd.Next(100, 300));
-        }
-
-
-        //метод выселения
-        private void Kill(string ab)
-        {
-            //входим в чувака
-            ClickLink(ab, "");
-
-            Thread.Sleep(rnd.Next(100, 300));
-
-            //ищем кнопку "Выселить"
-            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < str.Length; i++)
-            {
-                //получаем ссылку "Выселить"
-                if (str[i].Contains("Выселить"))
-                {
-                    ab = str[i];
-                    ab = ab.Substring(22);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-
-                    //пытаемся выкинуть нах
-                    ClickLink(ab, "");
-
-                    //HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    killed_count++;
-                    Killed_Count++;
-
-                    Thread.Sleep(rnd.Next(100, 300));
-                    break;
-                }
-            }
-        }
-
-        //попытка устроить на работу
-        //на входе ссылка и количество свободных мест 
-        private bool GoToWork(string ab, int free)
-        {
-            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            //входим в чувака
-            ClickLink(ab, "");
-
-            Thread.Sleep(rnd.Next(100, 300));
-
-            ab = Parse(HTML, "Найти работу");
-            ab = ab.Substring(22);
-            ab = ab.Remove(ab.IndexOf('\"'));
-
-
-            //жмакаем на "Найти работу"
-            ClickLink(ab, "");
-
-            Thread.Sleep(rnd.Next(100, 300));
-
-            //а вдруг есть пустота
-            if ((ab = Parse(HTML, "устроить на работу")) != "")
-            {
-                //ab = ab.Substring(115);
-                ab = ab.Substring(92);
-                ab = ab.Remove(ab.IndexOf('\"'));
-
-                //жмакаем на "устроить на работу"
-                ClickLink(ab, "");
-
-                Thread.Sleep(rnd.Next(100, 300));
-
-                return true;
-            }
-
-            //иначе идем дальше только если ничего не доставляется
-            else if ((HTML.Contains("/icons/st_sell.png") || HTML.Contains("/icons/st_sold.png") || HTML.Contains("/icons/st_stocked.png") || HTML.Contains("/icons/st_empty.png")) && !HTML.Contains("/icons/st_stocking.png") && free > 0)
-            {
-                //разбиваем страницу на строки
-                str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                //получаем ссылку на этаж
-                for (int i = 0; i < str.Length; i++)
-                {
-                    if (str[i].Contains("/icons/sml_happy.png"))
-                    {
-                        ab = str[i - 3].Substring(9);
-                        ab = ab.Remove(ab.IndexOf('\"'));
-
-                        break;
-                    }
-                }
-
-                //жмакаем на этаж
-                ClickLink(ab, "");
-
-                Thread.Sleep(rnd.Next(100, 300));
-
-                //разбиваем страницу на строки
-                str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-
-                //получаем худшего работника
-                for (int i = 0; i < str.Length; i++)
-                {
-                    if (str[i].Contains("class=\"w3\""))
-                    {
-                        ab = str[i + 1].Substring(21);
-                        ab = ab.Remove(ab.IndexOf('\"'));
-
-                        break;
-                    }
-                }
-
-                //жмакаем на худшего работника
-                ClickLink(ab, "");
-
-                Thread.Sleep(rnd.Next(100, 300));
-
-
-                //получаем ссылку "Уволить"
-                ab = Parse(HTML, "Уволить");
-                ab = ab.Substring(22);
-                ab = ab.Remove(ab.IndexOf('\"'));
-
-                //жмакаем на "Уволить"
-                ClickLink(ab, "");
-
-                Thread.Sleep(rnd.Next(100, 300));
-
-
-                //получаем ссылку на возвращение на этаж
-                str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 0; i < str.Length; i++)
-                {
-                    if (str[i].Contains("Уволен из") || str[i].Contains("Уволена из"))
-                    {
-                        ab = str[i + 1];
-                        break;
-                    }
-                }
-
-                ab = ab.Substring(20);
-                ab = ab.Remove(ab.IndexOf('\"'));
-
-
-                //возвращаемся на этаж
-                ClickLink(ab, "");
-
-                Thread.Sleep(rnd.Next(100, 300));
-
-
-                //получаем ссылку "найти"
-                str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 0; i < str.Length; i++)
-                {
-                    if (str[i].Contains("найти"))
-                    {
-                        ab = str[i - 1];
-                        break;
-                    }
-                }
-                ab = ab.Substring(21);
-                ab = ab.Remove(ab.IndexOf('\"'));
-
-
-                //нажимием на "найти"
-                ClickLink(ab, "");
-
-                Thread.Sleep(rnd.Next(100, 300));
-
-
-                //получаем ссылку "принять на работу"
-                ab = Parse(HTML, "принять на работу");
-
-                //ab = ab.Substring(115);
-                ab = ab.Substring(92);
-                ab = ab.Remove(ab.IndexOf('\"'));
-
-                //и, наконец, нажимием на "принять на работу"
-                ClickLink(ab, "");
-
-                Thread.Sleep(rnd.Next(100, 300));
-
-                //после всех манипуляций надо вернуться в Гостиницу
-                GoHotel();
-
-                return true;
-            }
-
-            //ну а если доставляется - надо идти по остальным
-            return false;
-        }
-        
-
-        //метод приглашения в город
-        private void InviteToCity()
-        {
-            string[] str;
-            int InvMinLvl = -1, InvMaxLvl = -1;
-
-            if (Convert.ToBoolean(user_cfg.InviteFrom))
-            {
-                try
-                {
-                    InvMinLvl = Convert.ToInt32(user_cfg.InviteFromMeaning);
-                }
-                catch
-                {
-                    ThreadAbort("ОШИБКА. Минимальный уровень игрока должен быть от 10 до 75\n");
-                }
-            }
-            else InvMinLvl = 10;
-
-            if (Convert.ToBoolean(user_cfg.InviteTo))
-            {
-                try
-                {
-                    InvMaxLvl = Convert.ToInt32(user_cfg.InviteToMeaning);
-                }
-                catch
-                {
-                    ThreadAbort("ОШИБКА. Максимальный уровень игрока должен быть от 10 до 75\n");
-                }
-            }
-            else InvMaxLvl = 75;
-
-            invited_count = 0;
-
-            //пока не будет приглашен хотя бы 1
-            while (invited_count < 1)
-            {
-                GetHomePage();
-
-                //ссылка в Город
-                string ab = "";
-                ab = Parse(HTML, "Мой город");
-                if (ab != "")
-                {
-                    ab = ab.Substring(45);
-                    ab = ab.Remove(ab.IndexOf('\"'));
-
-                    //идем в Город
-                    ClickLink(ab, "");
-
-                    //ищем ссылку "поиск игроков"
-                    ab = Parse(HTML, "поиск игроков");
-                    if (ab != "")
-                    {
-                        ab = ab.Substring(44);
-                        ab = ab.Remove(ab.IndexOf('\"'));
-
-                        //идем к бомжам
-                        ClickLink(ab, "");
-
-                        ACTION_STATUS = "Зову народ";
-
-                        str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 0; i < str.Length; i++)
-                        {
-                            if (str[i].Contains("(+)") && !str[i-1].Contains("Мой город"))
-                            {
-                                //получаем уровень игрока
-                                int Level;
-
-                                if (str[i].Contains("star.png"))
-                                    ab = str[i].Substring(83);
-                                else ab = str[i - 1].Substring(83);
-                                ab = ab.Remove(ab.IndexOf('<'));
-
-                                Level = Convert.ToInt32(ab);
-
-                                //если уровень входит в диапазон - пробуем войти
-                                if (Level >= InvMinLvl && Level <= InvMaxLvl)
-                                {
-                                    if (str[i].Contains("star.png"))
-                                        ab = str[i - 1].Substring(28);
-                                    else ab = str[i - 2].Substring(28);
-                                    
-                                    ab = ab.Remove(ab.IndexOf('\"'));
-
-                                    ClickLink(ab,"");
-
-                                    //ищем строку  Пригласить в город (+)
-                                    str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                                    for (int j = 0; j < str.Length; j++)
-                                    {
-                                        if (str[j].Contains("Пригласить в город"))
-                                        {
-                                            ab = str[j].Substring(29);
-                                            ab = ab.Remove(ab.IndexOf('\"'));
-
-                                            ClickLink(ab, "");
-
-                                            if (HTML.Contains("Приглашение отправлено!"))
-                                            {
-                                                invited_count++;
-                                                Invited_Count++;
-                                                break;
-                                            }
-
-                                            else
-                                                break;
-                                        }
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                    }
-
-                    //иначе выходим, чтобы бесконечно не зациклиться
-                    else
-                        return;
-                }
-            }
-            if (invited_count != 0) COMMUTATION_STR = string.Format("{0}  -  Отправлено приглашений: {1}.", GetTime(), invited_count);
-            ACTION_STATUS = "Анализ ситуации";
-            Thread.Sleep(rnd.Next(100, 300));
-        }
-
-        //пробуем открыть этаж
-        private void TryToOpenFloor()
-        {
-            GetHomePage();
-
-            string ab = "";
-            //проверяем - не надо ли открыть этаж
-            opened_floor_count = 0;
-            while ((ab = Parse(HTML, "Открыть этаж!")) != "")
-            {
-                ACTION_STATUS = "Открываю этажи";
-                //ab = ab.Substring(117);
-                ab = ab.Substring(94);
-                ab = ab.Remove(ab.IndexOf("\""));
-
-                ClickLink(ab, "");
-                opened_floor_count++;
-                Opened_Floor_Count++;
-                Thread.Sleep(rnd.Next(100, 300));
-            }
-            if (opened_floor_count != 0) COMMUTATION_STR = string.Format("{0}  -  Открыто этажей: {1}.", GetTime(), opened_floor_count);
-            ACTION_STATUS = "Анализ ситуации";
-            Thread.Sleep(rnd.Next(100, 300));
-        }
-
-        //пробуем назначить на должность
-        private void TryToAppoint()
-        {
-            string[] str;
-
-            GetHomePage();
-
-            //ссылка в Город
-            string ab = "";
-            ab = Parse(HTML, "Мой город");
-            if (ab != "")
-            {
-                ab = ab.Substring(45);
-                ab = ab.Remove(ab.IndexOf('\"'));
-
-                //идем в Город
-                ClickLink(ab, "");
-            }
+            return user_cfg;
         }
     }
 }
