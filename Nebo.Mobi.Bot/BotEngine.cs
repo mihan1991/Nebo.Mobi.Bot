@@ -633,7 +633,7 @@ namespace Nebo.Mobi.Bot
             {
                 if (a.Contains("/images/icons/tb_lift2.png")) //если пусто
                     break;
-                else if (a.Contains("/images/icons/tb_lift.png") || a.Contains("/images/icons/tb_lift_vip.png")) //если есть народ или ВИПы
+                else if (a.Contains("/images/icons/tb_lift.png") || a.Contains("/images/icons/tb_lift_vip.png") || a.Contains("/images/icons/tb_lift_ny.png") || a.Contains("/images/icons/tb_lift_vip_ny.png")) //если есть народ или ВИПы
                 {
                     ab = a.Substring(21, 48);
                     break;
