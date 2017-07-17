@@ -346,6 +346,7 @@ namespace Nebo.Mobi.Bot
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
             Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+            Process.Start(new ProcessStartInfo("http://casualient.com/17437249/nebomobibot"));
             e.Handled = true;
         }
         
