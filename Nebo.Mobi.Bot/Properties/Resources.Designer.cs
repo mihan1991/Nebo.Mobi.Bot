@@ -161,6 +161,15 @@ namespace Nebo.Mobi.Bot.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Не развозить посетителей на лифте..
+        /// </summary>
+        internal static string cbDoNotLift {
+            get {
+                return ResourceManager.GetString("cbDoNotLift", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Не выкладывать товар. Полезно перед походом к инвесторам..
         /// </summary>
         internal static string cbDoNotPut {
@@ -179,7 +188,7 @@ namespace Nebo.Mobi.Bot.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Не обновлять страницу статистики (экономит время и трафик).
+        ///   Looks up a localized string similar to Не обновлять страницу статистики (экономит время и трафик)..
         /// </summary>
         internal static string cbDoNotShowStatistic {
             get {
@@ -471,7 +480,7 @@ namespace Nebo.Mobi.Bot.Properties {
         ///    &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;http://nebo.mobi/images/style.css?v=83&quot;/&gt;
         ///    &lt;title&gt;Старт&lt;/title&gt;
         ///  &lt;/head&gt;
-        ///  &lt;body clas [rest of string was truncated]&quot;;.
+        ///   [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string start {
             get {
@@ -490,7 +499,7 @@ namespace Nebo.Mobi.Bot.Properties {
         ///    &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;http://nebo.mobi/images/style.css?v=83&quot;/&gt;
         ///    &lt;title&gt;Старт&lt;/title&gt;
         ///  &lt;/head&gt;
-        ///  &lt;body clas [rest of string was truncated]&quot;;.
+        ///   [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string start_off {
             get {
@@ -509,7 +518,7 @@ namespace Nebo.Mobi.Bot.Properties {
         ///    &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;http://nebo.mobi/images/style.css?v=83&quot;/&gt;
         ///    &lt;title&gt;Профиль&lt;/title&gt;
         ///  &lt;/head&gt;
-        ///  &lt;body cl [rest of string was truncated]&quot;;.
+        /// [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string stat {
             get {
@@ -576,7 +585,7 @@ namespace Nebo.Mobi.Bot.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Максимальный уровень приглашаемого игрока.
+        ///   Looks up a localized string similar to Максимальный уровень приглашаемого игрока..
         /// </summary>
         internal static string tbInviteTo {
             get {
@@ -656,6 +665,16 @@ namespace Nebo.Mobi.Bot.Properties {
         internal static System.Drawing.Bitmap users_plus {
             get {
                 object obj = ResourceManager.GetObject("users_plus", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap vk {
+            get {
+                object obj = ResourceManager.GetObject("vk", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -761,7 +761,7 @@
 </value>
   </data>
   <data name="cbDoNotShowStatistic" xml:space="preserve">
-    <value>Не обновлять страницу статистики (экономит время и трафик)</value>
+    <value>Не обновлять страницу статистики (экономит время и трафик).</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="start" type="System.Resources.ResXFileRef, System.Windows.Forms">
@@ -772,6 +772,33 @@
   </data>
   <data name="stat" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\stat.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="bot" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\bot.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="cbInvite" xml:space="preserve">
+    <value>По возможности приглашать в город других игроков.</value>
+  </data>
+  <data name="cbInviteFrom" xml:space="preserve">
+    <value>Приглашать игроков с уровнем, не меньше заданного.</value>
+  </data>
+  <data name="cbInviteTo" xml:space="preserve">
+    <value>Приглашать игроков с уровнем не больше заданного.</value>
+  </data>
+  <data name="tbInviteFrom" xml:space="preserve">
+    <value>Минимальный уровень приглашаемого игрока.</value>
+  </data>
+  <data name="tbInviteTo" xml:space="preserve">
+    <value>Максимальный уровень приглашаемого игрока.</value>
+  </data>
+  <data name="cbAppoint" xml:space="preserve">
+    <value>По возможности автоматически назначать НОВИЧКОВ в городе на указанную должность.</value>
+  </data>
+  <data name="cboxAppointTo" xml:space="preserve">
+    <value>Должность, на которую будет назначен НОВИЧОК.</value>
+  </data>
+  <data name="cbDoNotLift" xml:space="preserve">
+    <value>Не развозить посетителей на лифте.</value>
   </data>
   <data name="fon" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -10237,28 +10264,16 @@
         K0oD7T7/fucvv7O7ZoJqXAP2wvy/H/qD/x/FFIao24Gw3QAAAABJRU5ErkJggg==
 </value>
   </data>
-  <data name="bot" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\bot.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="cbInvite" xml:space="preserve">
-    <value>По возможности приглашать в город других игроков.</value>
-  </data>
-  <data name="cbInviteFrom" xml:space="preserve">
-    <value>Приглашать игроков с уровнем, не меньше заданного.</value>
-  </data>
-  <data name="cbInviteTo" xml:space="preserve">
-    <value>Приглашать игроков с уровнем не больше заданного.</value>
-  </data>
-  <data name="tbInviteFrom" xml:space="preserve">
-    <value>Минимальный уровень приглашаемого игрока.</value>
-  </data>
-  <data name="tbInviteTo" xml:space="preserve">
-    <value>Максимальный уровень приглашаемого игрока</value>
-  </data>
-  <data name="cbAppoint" xml:space="preserve">
-    <value>По возможности автоматически назначать НОВИЧКОВ в городе на указанную должность.</value>
-  </data>
-  <data name="cboxAppointTo" xml:space="preserve">
-    <value>Должность, на которую будет назначен НОВИЧОК.</value>
+  <data name="vk" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAAAZdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuMTZEaa/1
+        AAABGklEQVQ4T2MAAZ+yRYneJYum+pYRh0FqQXrAmr3LFof4lC7+Tw4G6QUZUItNkhgM0svgVbqwDpsk
+        MRikl7oGpHdt/N+x+ND/xNZ1/7N7N//fcOja//6VR8FyBRO2/m9bdBCsBqcBZVN3/AeB41ce/fcrW/L/
+        1++//6/ef/k/qGrZ/7cfv/3/9+8/UM1O3AaA8NkbT8GGgFzy+8/f/7cevfm/HugSEFiz/wpcHQhjNQDk
+        xJ+//oA1oAOQt5DVYjUAhLuWHv7/B2g7CLz//P3/3jN3wWyQN5La1hE2AISzejb9X7rz4v9Jq4//9wWG
+        x+xNZ/6vO3jtfykwnGBq8BpADKaOARQnZVCGwCZJDAbpBedIsrJzMSg7MzAAAPOXa8gFg1jMAAAAAElF
+        TkSuQmCC
+</value>
   </data>
 </root>

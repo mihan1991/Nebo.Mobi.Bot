@@ -12,7 +12,7 @@
             <GroupBox Header="Глобальные действия" Height="60" Name="gbGlobal" VerticalAlignment="Top" >
                 <Grid>
                     <Button Name="bAddUser" Content="+" VerticalContentAlignment="Center" Background="#FF33CC00" BorderBrush="#FF33CC00" Height="30" HorizontalAlignment="Right" Margin="0,1,1,0" VerticalAlignment="Top" Width="35" Foreground="White" FontSize="16" FontWeight="Bold" FontFamily="Calibri" Click="button_Click" MouseEnter="ToolTip_MouseEnter"/>
-                    <Button Name="bSave" Content="Сохранить" VerticalContentAlignment="Center" Height="30" HorizontalAlignment="Right" Margin="0,1,50,0" VerticalAlignment="Top" Width="65" Foreground="White" Click="button_Click" MouseEnter="ToolTip_MouseEnter"/>
+                    <Button Name="bSave" Content="Сохранить" VerticalContentAlignment="Center" Height="30" HorizontalAlignment="Right" Margin="0,1,50,0" VerticalAlignment="Top" Width="65" Click="button_Click" MouseEnter="ToolTip_MouseEnter" />
                     <CheckBox Content="Автозапуск и автостарт" Height="16" HorizontalAlignment="Left" Margin="195,1,0,0" Name="cbAutorun" VerticalAlignment="Top" Click="cb_Click" MouseEnter="ToolTip_MouseEnter"/>
                     <CheckBox Content="Запускать свернутым" Height="16" HorizontalAlignment="Left" Margin="195,17,0,0" Name="cbHide" VerticalAlignment="Top" Click="cb_Click" MouseEnter="ToolTip_MouseEnter"/>
                     <Button Content="Старт" Height="23" HorizontalAlignment="Left" Margin="8,6,0,0" Name="bStartAll" VerticalAlignment="Top" Width="75" Click="button_Click" MouseEnter="ToolTip_MouseEnter"/>
@@ -52,10 +52,11 @@
                                 <Grid>
                                     <CheckBox Name="cbDoNotPut" Content="НЕ выкладывать товар" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,5,0,0" Width="145"/>
                                     <CheckBox Name="cbDoNotGetRevard" Content="НЕ собирать награды" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,25,0,0" Width="145"/>
-                                    <CheckBox Name="cbFire" Content="Выселять жильцов с уровнем ниже:" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,45,0,0" Width="220"/>
-                                    <TextBox Name="tbFireLess" Height="25" Width="25" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="225,40,0,0" VerticalContentAlignment="Center"/>
-                                    <CheckBox Name="cbFire9" Content="Выселять жильцов 9 уровня со знаком (-)" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,65,0,0" Width="250"/>
-                                    <CheckBox Name="cbDoNotShowStatistic" Content="НЕ отображать статистику" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,85,0,0" Width="250"/>
+                                    <CheckBox Name="cbDoNotLift" Content="НЕ катать лифт" Height="20" HorizontalAlignment="Left" Margin="5,45,0,0" VerticalAlignment="Top" Width="145" />
+                                    <CheckBox Name="cbFire" Content="Выселять жильцов с уровнем ниже:" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,65,0,0" Width="220"/>
+                                    <TextBox Name="tbFireLess" Height="25" Width="25" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="225,60,0,0" VerticalContentAlignment="Center"/>
+                                    <CheckBox Name="cbFire9" Content="Выселять жильцов 9 уровня со знаком (-)" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,85,0,0" Width="250"/>
+                                    <CheckBox Name="cbDoNotShowStatistic" Content="НЕ отображать статистику" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,105,0,0" Width="250"/>
                                     <CheckBox Name="cbInvite" Content="Приглашать в город" Height="16" HorizontalAlignment="Left" Margin="280,5,0,0" VerticalAlignment="Top" />
                                     <GroupBox Name="gbInvite" HorizontalAlignment="Left" Margin="280,22,0,0" Width="227" Height="99" VerticalAlignment="Top">
                                     <Grid>
@@ -67,13 +68,12 @@
                                         <ComboBox Name="cboxAppointTo" Height="23" HorizontalAlignment="Left" Margin="110,65,0,0" VerticalAlignment="Top" Width="100" />
                                     </Grid>
                                 </GroupBox>
-                                
                             </Grid>
                             </GroupBox>
                             <Grid Margin="1, 180, 1, 1" HorizontalAlignment="Left">
                                 <WebBrowser Name="wb" Margin="2,2,2,2" Width="350" HorizontalAlignment="Left" />
                                 <RichTextBox Name="webBrowser1" ScrollViewer.VerticalScrollBarVisibility="Visible" Margin="355,0,0,0"/>
-                            </Grid>
+                        </Grid>
                             <Grid Height="25" Name="grid1" VerticalAlignment="Top" Background="White" Margin="-2,-2,-2,0">
                                 <Button Content="X" VerticalContentAlignment="Center" Background="Red" BorderBrush="Red" Height="25" HorizontalAlignment="Right" Margin="0,0,0,0" Name="button3" VerticalAlignment="Top" Width="35" Foreground="White" FontSize="16" FontWeight="Bold" FontFamily="Calibri" Click="button_Click"/>
                                 <Image Name="iStatus" Height="16" Width="16" Margin="10,0,0,0" HorizontalAlignment="Left" Source="/Resources/lift.png"/>
@@ -83,7 +83,13 @@
                     </TabItem.Content>
                 </TabItem>
             </TabControl>
-            <Label Name ="lCopyright" Content="Exclusive by Mr.President  ©  2014 - 2016. ver. x.y" Height="26" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="290"></Label>
-        </Grid>
+            <Label Name ="lCopyright" Content="Exclusive by Mr.President  ©  2014 - 2017. ver. x.y" Height="26" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="290"></Label>
+        <TextBlock Height="23" HorizontalAlignment="Left" Margin="22,0,0,-2" Name="linkVK" VerticalAlignment="Bottom">
+        <Hyperlink NavigateUri="http://casualient.com/8qO" RequestNavigate="Hyperlink_RequestNavigate">
+        Группа В Контакте
+        </Hyperlink>
+        </TextBlock>
+        <Image Height="16" HorizontalAlignment="Left" Margin="5,0,0,5" Name="iVK" Stretch="Fill" VerticalAlignment="Bottom" Width="16" />
+    </Grid>
   <!--  </Border> -->
 </Window>

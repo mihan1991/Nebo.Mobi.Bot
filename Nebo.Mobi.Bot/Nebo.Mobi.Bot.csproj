@@ -143,23 +143,17 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\Debug\mn_gold.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="bin\Debug\config.xml">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="start_off.html" />
-    <None Include="start.html" />
+    <None Include="Resources\iVK.png" />
+    <Resource Include="Resources\vk.png" />
+    <Content Include="start.html" />
     <Resource Include="Resources\bot.ico" />
     <Resource Include="Resources\city.png" />
     <Resource Include="Resources\connect.png" />

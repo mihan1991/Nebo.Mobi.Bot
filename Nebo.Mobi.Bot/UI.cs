@@ -56,6 +56,7 @@ namespace Nebo.Mobi.Bot
         private Grid gMethodsData;
         private CheckBox cbDoNotPut;
         private CheckBox cbDoNotGetRevard;
+        private CheckBox cbDoNotLift;
         private CheckBox cbFire;
         private TextBox tbFireLess;
         private CheckBox cbFire9;
@@ -196,6 +197,7 @@ namespace Nebo.Mobi.Bot
             gMethodsData = new Grid();
             cbDoNotPut = new CheckBox();
             cbDoNotGetRevard = new CheckBox();
+            cbDoNotLift = new CheckBox();
             cbFire = new CheckBox();
             tbFireLess = new TextBox();
             cbFire9 = new CheckBox();
@@ -434,12 +436,23 @@ namespace Nebo.Mobi.Bot
             cbDoNotGetRevard.Click += cbClick;
 
 
+            cbDoNotLift.Name = "cbDoNotLift";
+            cbDoNotLift.Content = "НЕ катать лифт";
+            cbDoNotLift.Height = 20;
+            cbDoNotLift.HorizontalAlignment = HorizontalAlignment.Left;
+            cbDoNotLift.VerticalAlignment = VerticalAlignment.Top;
+            cbDoNotLift.Margin = new Thickness(5, 45, 0, 0);
+            cbDoNotLift.Width = 145;
+            cbDoNotLift.MouseEnter += ShowToolTip;
+            cbDoNotLift.Click += cbClick;
+
+
             cbFire.Name = "cbFire";
             cbFire.Content = "Выселять жильцов с уровнем ниже:";
             cbFire.Height = 20;
             cbFire.HorizontalAlignment = HorizontalAlignment.Left;
             cbFire.VerticalAlignment = VerticalAlignment.Top;
-            cbFire.Margin = new Thickness(5, 45, 0, 0);
+            cbFire.Margin = new Thickness(5, 65, 0, 0);
             cbFire.Width = 220;
             cbFire.MouseEnter += ShowToolTip;
             cbFire.Click += cbClick;
@@ -450,7 +463,7 @@ namespace Nebo.Mobi.Bot
             tbFireLess.Width = tbHeight;
             tbFireLess.HorizontalAlignment = HorizontalAlignment.Left;
             tbFireLess.VerticalAlignment = VerticalAlignment.Top;
-            tbFireLess.Margin = new Thickness(225, 40, 0, 0);
+            tbFireLess.Margin = new Thickness(225, 60, 0, 0);
             tbFireLess.VerticalContentAlignment = VerticalAlignment.Center;
             tbFireLess.MouseEnter += ShowToolTip;
             tbFireLess.LostFocus += tbLostFocus;
@@ -462,7 +475,7 @@ namespace Nebo.Mobi.Bot
             cbFire9.Height = 20;
             cbFire9.HorizontalAlignment = HorizontalAlignment.Left;
             cbFire9.VerticalAlignment = VerticalAlignment.Top;
-            cbFire9.Margin = new Thickness(5, 65, 0, 0);
+            cbFire9.Margin = new Thickness(5, 85, 0, 0);
             cbFire9.Width = 250;
             cbFire9.MouseEnter += ShowToolTip;
             cbFire9.Click += cbClick;
@@ -472,7 +485,7 @@ namespace Nebo.Mobi.Bot
             cbDoNotShowStatistic.Height = 20;
             cbDoNotShowStatistic.HorizontalAlignment = HorizontalAlignment.Left;
             cbDoNotShowStatistic.VerticalAlignment = VerticalAlignment.Top;
-            cbDoNotShowStatistic.Margin = new Thickness(5, 85, 0, 0);
+            cbDoNotShowStatistic.Margin = new Thickness(5, 105, 0, 0);
             cbDoNotShowStatistic.MouseEnter += ShowToolTip;
             cbDoNotShowStatistic.Click += cbClick;
 
@@ -568,6 +581,7 @@ namespace Nebo.Mobi.Bot
 
             gMethodsData.Children.Add(cbDoNotPut);
             gMethodsData.Children.Add(cbDoNotGetRevard);
+            gMethodsData.Children.Add(cbDoNotLift);
             gMethodsData.Children.Add(cbFire);
             gMethodsData.Children.Add(tbFireLess);
             gMethodsData.Children.Add(cbFire9);
@@ -687,6 +701,7 @@ namespace Nebo.Mobi.Bot
             cbFire9.IsChecked = Convert.ToBoolean(user_cfg.Fire9);
             cbDoNotShowStatistic.IsChecked = Convert.ToBoolean(user_cfg.DoNotShowStatistic);
             cbDoNotGetRevard.IsChecked = Convert.ToBoolean(user_cfg.DoNotGetRevard);
+            cbDoNotLift.IsChecked = Convert.ToBoolean(user_cfg.DoNotLift);
             cbInvite.IsChecked = Convert.ToBoolean(user_cfg.Invite);
             cbInviteFrom.IsChecked = Convert.ToBoolean(user_cfg.InviteFrom);
             tbInviteFrom.Text = user_cfg.InviteFromMeaning;
@@ -727,6 +742,8 @@ namespace Nebo.Mobi.Bot
         //для запуска бота (в т.ч. и снаружи)
         public void StartBotThread()
         {
+            //user_cfg = BOT.user_cfg;
+
             bStart.IsEnabled = false;
             bStop.IsEnabled = true;
             if (BOT.GetBotThread() != null && BOT.GetBotThread().IsAlive) StopBotThread();
@@ -737,7 +754,7 @@ namespace Nebo.Mobi.Bot
             ref_timer.Start();
 
             timeleft = 0;
-            //spPageHeadImg.Source = new BitmapImage(new Uri("/Resources/player-m.png", UriKind.Relative));
+            //spPageHeadImg.Source = new BitmapImage(new Uri("/Resources/" + user_cfg.Avatar, UriKind.Relative));
             BOT.GetBotThread().Start();
         }
 
@@ -819,6 +836,7 @@ namespace Nebo.Mobi.Bot
             user_cfg.FireLess = tbFireLess.Text;
             user_cfg.Fire9 = cbFire9.IsChecked.Value.ToString().ToLower();
             user_cfg.DoNotGetRevard = cbDoNotGetRevard.IsChecked.Value.ToString().ToLower();
+            user_cfg.DoNotLift = cbDoNotLift.IsChecked.Value.ToString().ToLower();
             user_cfg.DoNotShowStatistic = cbDoNotShowStatistic.IsChecked.Value.ToString().ToLower();
             user_cfg.Invite = cbInvite.IsChecked.Value.ToString().ToLower();
             user_cfg.InviteFrom = cbInviteFrom.IsChecked.Value.ToString().ToLower();
@@ -1078,6 +1096,7 @@ namespace Nebo.Mobi.Bot
         //обновление содержания формы
         private void UpdForm()
         {
+            user_cfg = BOT.user_cfg;
             DateTime first = DateTime.Now;
             if (BOT.GetBotThread().IsAlive)
             {
@@ -1127,7 +1146,7 @@ namespace Nebo.Mobi.Bot
 
             lStatus.Text = BOT.CONNECT_STATUS + BOT.ACTION_STATUS;
 
-            //отображаем страницу в раузере            
+            //отображаем страницу в браузере            
             if (BOT.PageCreated)
             {
                 wbAction.DocumentText = BOT.CURRENT_HTML;

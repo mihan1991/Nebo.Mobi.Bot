@@ -1,22 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.Linq;
 using System.Text;
-//using System.Windows;
-//using System.Windows.Controls;
 using System.Windows.Data;
-//using System.Windows.Documents;
-//using System.Windows.Input;
-//using System.Windows.Media;
-//using System.Windows.Media.Imaging;
-//using System.Windows.Navigation;
-//using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Threading;
 using System.Web;
 using System.Net;
 using System.IO;
-//using System.Xml;
+
 namespace Nebo.Mobi.Bot
 {
     public class BotEngine
@@ -370,47 +361,57 @@ namespace Nebo.Mobi.Bot
                 //собираем награды
                 if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
                 {
-                    GetReavrd();
+                    GetRevard();
                     if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
                         GetInfo();
                 }
+
                 //шмонаем гостиницу
                 FindWorkers();
                 if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
                 {
-                    GetReavrd();
+                    GetRevard();
                     if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
                         GetInfo();
                 }
+
                 //собираем выручку
                 CollectMoney();
                 if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
                 {
-                    GetReavrd();
+                    GetRevard();
                     if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
                         GetInfo();
                 }
+
                 if (!Convert.ToBoolean(user_cfg.DoNotPut))
                 {
                     //выкладываем товары
                     PutMerch();
                     if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
                     {
-                        GetReavrd();
+                        GetRevard();
                         if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
                             GetInfo();
                     }
                 }
+
                 //закупаем товары
                 Buy();
                 if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
                 {
-                    GetReavrd();
+                    GetRevard();
                     if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
                         GetInfo();
                 }
-                //катаем лифт
-                GoneLift();
+
+                //катаем лифт (если не запрещено)
+                if (!Convert.ToBoolean(user_cfg.DoNotLift))
+                {
+                    GoneLift();
+                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
+                        GetInfo();
+                }
 
                 //зовем народ
                 if (Convert.ToBoolean(user_cfg.Invite))
@@ -469,7 +470,7 @@ namespace Nebo.Mobi.Bot
         //жмакнуть по ссылке
         private void ClickLink(string link, string param)
         {
-            webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/39.0");
+            webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0");
             webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
             //webClient.Headers[HttpRequestHeader.Host] = SERVER;
             webClient.Encoding = Encoding.UTF8;
@@ -678,7 +679,7 @@ namespace Nebo.Mobi.Bot
         }
 
         //основной метод получения награды (баксов)
-        private void GetReavrd()
+        private void GetRevard()
         {
             GetHomePage();
             //получаем ссылку на квесты и кликаем если есть награда

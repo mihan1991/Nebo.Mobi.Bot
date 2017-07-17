@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using System.Diagnostics;
 using System.Windows.Shapes;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
@@ -27,7 +28,7 @@ namespace Nebo.Mobi.Bot
     [Serializable]
     public partial class MainWindow : Window
     {
-        private string version = "2.2a";                          //версия бота
+        private string version = "2.3";                          //версия бота
         private Config cfg;                                      //хранилище настроек
         private List<UI> ui;                                     //коллекция объектов страниц профиля и работы боты
 
@@ -46,6 +47,7 @@ namespace Nebo.Mobi.Bot
         public MainWindow()
         {
             InitializeComponent();
+            iVK.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/vk.png", UriKind.Absolute));
 
             //пока так с tray_icon
             this.Icon = new BitmapImage(new Uri("pack://application:,,,/Resources/bot.ico", UriKind.Absolute));
@@ -298,7 +300,7 @@ namespace Nebo.Mobi.Bot
             {
                 AddUser(cfg.users[i]);
             }
-            lCopyright.Content = "Exclusive by Mr.President  ©  2014 - 2016." + "  ver. " + version;
+            lCopyright.Content = "Exclusive by Mr.President  ©  2014 - 2017." + "  ver. " + version;
 
             if (cbAutorun.IsChecked.Value)
                 for (int i = 0; i < ui.Count; i++)
@@ -339,7 +341,13 @@ namespace Nebo.Mobi.Bot
         {
             this.DragMove();
         }
-            
+
+        //по клику ссылки
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+            e.Handled = true;
+        }
         
     }
 }
