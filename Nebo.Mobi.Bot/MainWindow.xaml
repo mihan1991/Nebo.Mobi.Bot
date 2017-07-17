@@ -86,7 +86,7 @@
             <Label Name ="lCopyright" Content="Exclusive by Mr.President  ©  2014 - 2017. ver. x.y" Height="26" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="290"></Label>
         <TextBlock Height="23" HorizontalAlignment="Left" Margin="22,0,0,-2" Name="linkVK" VerticalAlignment="Bottom">
         <Hyperlink NavigateUri="http://casualient.com/8qO" RequestNavigate="Hyperlink_RequestNavigate">
-        Группа В Контакте
+        Группа ВКонтакте
         </Hyperlink>
         </TextBlock>
         <Image Height="16" HorizontalAlignment="Left" Margin="5,0,0,5" Name="iVK" Stretch="Fill" VerticalAlignment="Bottom" Width="16" />
