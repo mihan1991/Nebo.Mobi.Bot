@@ -28,7 +28,7 @@ namespace Nebo.Mobi.Bot
     [Serializable]
     public partial class MainWindow : Window
     {
-        private string version = "2.3";                          //версия бота
+        private string version = "2.4";                          //версия бота
         private Config cfg;                                      //хранилище настроек
         private List<UI> ui;                                     //коллекция объектов страниц профиля и работы боты
 

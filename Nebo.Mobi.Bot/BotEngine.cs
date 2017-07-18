@@ -702,25 +702,55 @@ namespace Nebo.Mobi.Bot
                         //фиксируем строчку со ссылкой на получение
                         ab = str[i];
 
-                        //считаем награду
-                        string stat = str[i - 3];
-                        if (stat.Contains("Бонус X2!"))
-                            stat = str[i - 6];
-                        //stat = stat.Substring("<span><img src=\"http://static.nebo.mobi/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>".Length);
-                        stat = stat.Substring("<span><img src=\"/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>".Length);
-                        stat = stat.Remove(stat.IndexOf('<'));
-                        bucks_count += Convert.ToInt32(stat);
+                        //если это не Коллекции
+                        if (!HTML.Contains("Коллекции"))
+                        {
+                            //считаем награду
+                            string stat = str[i - 3];
+                            if (stat.Contains("Бонус X2!"))
+                                stat = str[i - 6];
+                            //stat = stat.Substring("<span><img src=\"http://static.nebo.mobi/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>".Length);
+                            stat = stat.Substring("<span><img src=\"/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>".Length);
+                            stat = stat.Remove(stat.IndexOf('<'));
+                            bucks_count += Convert.ToInt32(stat);
 
-                        //получаем ссылку, кликаем и ждем
-                        ab = ab.Substring("<div><a class=\"btng btn60\" href=\"".Length);
-                        ab = ab.Remove(ab.IndexOf('\"'));
-                        ClickLink(ab, "");
-                        Thread.Sleep(rnd.Next(100, 300));
+                            //получаем ссылку, кликаем и ждем
+                            ab = ab.Substring("<div><a class=\"btng btn60\" href=\"".Length);
+                            ab = ab.Remove(ab.IndexOf('\"'));
+                            ClickLink(ab, "");
+                            Thread.Sleep(rnd.Next(100, 300));
+
+                            Bucks_Count += bucks_count;
+                            ACTION_STATUS = "Анализ ситуации";
+                            COMMUTATION_STR.Add(string.Format("{0}  -  Собрано наградных баксов: {1}.", GetTime(), bucks_count));
+                        }
+
+                        //если это награда за коллекцию
+                        else
+                        {
+                            //получаем ссылку, кликаем и ждем
+                            ab = ab.Substring("<div><a class=\"btng btn60\" href=\"".Length);
+                            ab = ab.Remove(ab.IndexOf('\"'));
+                            ClickLink(ab, "");
+                            Thread.Sleep(rnd.Next(100, 300));
+
+                            //считаем награду
+                            str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                            string stat = "";
+                            for(int j=0; j<str.Length; j++)
+                                if(str[j].Contains("Награда"))
+                                    stat = str[j+3];
+                            //stat = stat.Substring("<span><img src=\"http://static.nebo.mobi/images/icons/mn_gold.png\" width=\"16\" height=\"16\" alt=\"$\"/><span>".Length);
+                            stat = stat.Substring(81);
+                            stat = stat.Remove(stat.IndexOf('<'));
+                            bucks_count += Convert.ToInt32(stat);
+
+                            Bucks_Count += bucks_count;
+                            ACTION_STATUS = "Анализ ситуации";
+                            COMMUTATION_STR.Add(string.Format("{0}  -  Получено баксов за коллекцию: {1}.", GetTime(), bucks_count));
+                        }
                     }
-                }
-                Bucks_Count += bucks_count;
-                ACTION_STATUS = "Анализ ситуации";
-                COMMUTATION_STR.Add(string.Format("{0}  -  Собрано наградных баксов: {1}.", GetTime(), bucks_count));
+                }                
 
                 GetHomePage();
             }
