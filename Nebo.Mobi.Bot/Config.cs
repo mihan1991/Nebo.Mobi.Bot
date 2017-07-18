@@ -30,6 +30,7 @@ namespace Nebo.Mobi.Bot
             public string DoNotSaveThePass;
             public string DoNotGetRevard;
             public string DoNotLift;
+            public string AutoCollection;
             public string Invite;
             public string InviteFrom;
             public string InviteFromMeaning;
@@ -52,6 +53,7 @@ namespace Nebo.Mobi.Bot
                 Fire9 = "true";
                 DoNotShowStatistic = "false";
                 DoNotLift = "false";
+                AutoCollection = "true";
                 DoNotSaveThePass = "false";
                 DoNotGetRevard = "false";
                 Invite = "true";
@@ -75,7 +77,7 @@ namespace Nebo.Mobi.Bot
             UsersCount = 1;             //1 т.к. создастся 1 пустой персонаж
             Autorun = "false";
             Hide = "false";
-            SizeX = "985";
+            SizeX = "750";
             SizeY = "700";
             users = new List<User>();
             LoadConfig();
@@ -229,6 +231,16 @@ namespace Nebo.Mobi.Bot
                     {
                         node = doc.SelectSingleNode(string.Format("config/u{0}/DoNotLift", i));
                         u.DoNotLift = node.InnerText;
+                    }
+                    catch
+                    {
+                        EverythingAlright = false;
+                    }
+
+                    try
+                    {
+                        node = doc.SelectSingleNode(string.Format("config/u{0}/AutoCollection", i));
+                        u.AutoCollection = node.InnerText;
                     }
                     catch
                     {
@@ -414,6 +426,7 @@ namespace Nebo.Mobi.Bot
                 doc.WriteElementString("DoNotShowStatistic", users[i].DoNotShowStatistic);
                 doc.WriteElementString("DoNotGetRevard", users[i].DoNotGetRevard);
                 doc.WriteElementString("DoNotLift", users[i].DoNotLift);
+                doc.WriteElementString("AutoCollection", users[i].AutoCollection);
                 doc.WriteElementString("Invite", users[i].Invite);
                 doc.WriteElementString("InviteFrom", users[i].InviteFrom);
                 doc.WriteElementString("InviteFromMeaning", users[i].InviteFromMeaning);
@@ -476,6 +489,7 @@ namespace Nebo.Mobi.Bot
                 doc.WriteElementString("DoNotShowStatistic", users[i].DoNotShowStatistic);
                 doc.WriteElementString("DoNotGetRevard", users[i].DoNotGetRevard);
                 doc.WriteElementString("DoNotLift", users[i].DoNotLift);
+                doc.WriteElementString("AutoCollection", users[i].AutoCollection);
                 doc.WriteElementString("Invite", users[i].Invite);
                 doc.WriteElementString("InviteFrom", users[i].InviteFrom);
                 doc.WriteElementString("InviteFromMeaning", users[i].InviteFromMeaning);

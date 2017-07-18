@@ -54,9 +54,12 @@ namespace Nebo.Mobi.Bot
 
         private GroupBox gbMethods;
         private Grid gMethodsData;
+        private ScrollViewer svScroll;
+        private Grid gScroll;
         private CheckBox cbDoNotPut;
         private CheckBox cbDoNotGetRevard;
         private CheckBox cbDoNotLift;
+        private CheckBox cbAutoCollection;
         private CheckBox cbFire;
         private TextBox tbFireLess;
         private CheckBox cbFire9;
@@ -195,9 +198,12 @@ namespace Nebo.Mobi.Bot
 
             gbMethods = new GroupBox();
             gMethodsData = new Grid();
+            svScroll = new ScrollViewer();
+            gScroll = new Grid();
             cbDoNotPut = new CheckBox();
             cbDoNotGetRevard = new CheckBox();
             cbDoNotLift = new CheckBox();
+            cbAutoCollection = new CheckBox();
             cbFire = new CheckBox();
             tbFireLess = new TextBox();
             cbFire9 = new CheckBox();
@@ -489,6 +495,17 @@ namespace Nebo.Mobi.Bot
             cbDoNotShowStatistic.MouseEnter += ShowToolTip;
             cbDoNotShowStatistic.Click += cbClick;
 
+
+            cbAutoCollection.Name = "cbAutoCollection";
+            cbAutoCollection.Content = "Получать задания городских Коллекций";
+            cbAutoCollection.Height = 20;
+            cbAutoCollection.HorizontalAlignment = HorizontalAlignment.Left;
+            cbAutoCollection.VerticalAlignment = VerticalAlignment.Top;
+            cbAutoCollection.Margin = new Thickness(5, 135, 0, 0);
+            cbAutoCollection.MouseEnter += ShowToolTip;
+            cbAutoCollection.Click += cbClick;
+
+
             cbInvite.Name = "cbInvite";
             cbInvite.Content = "Приглашать в город";
             cbInvite.Height = 20;
@@ -578,16 +595,22 @@ namespace Nebo.Mobi.Bot
 
             gbInvite.Content = gInviteData;
 
+            gScroll.Children.Add(cbDoNotPut);
+            gScroll.Children.Add(cbDoNotGetRevard);
+            gScroll.Children.Add(cbDoNotLift);
+            gScroll.Children.Add(cbFire);
+            gScroll.Children.Add(tbFireLess);
+            gScroll.Children.Add(cbFire9);
+            gScroll.Children.Add(cbDoNotShowStatistic);
+            gScroll.Children.Add(cbAutoCollection);
+            gScroll.Children.Add(cbInvite);
+            gScroll.Children.Add(gbInvite);
 
-            gMethodsData.Children.Add(cbDoNotPut);
-            gMethodsData.Children.Add(cbDoNotGetRevard);
-            gMethodsData.Children.Add(cbDoNotLift);
-            gMethodsData.Children.Add(cbFire);
-            gMethodsData.Children.Add(tbFireLess);
-            gMethodsData.Children.Add(cbFire9);
-            gMethodsData.Children.Add(cbDoNotShowStatistic);
-            gMethodsData.Children.Add(cbInvite);
-            gMethodsData.Children.Add(gbInvite);
+            svScroll.Content = gScroll;
+            svScroll.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
+            svScroll.HorizontalScrollBarVisibility = ScrollBarVisibility.Auto;
+
+            gMethodsData.Children.Add(svScroll);
 
             gbMethods.Header = "Режимы работы";
             gbMethods.Height = 150;
@@ -702,6 +725,7 @@ namespace Nebo.Mobi.Bot
             cbDoNotShowStatistic.IsChecked = Convert.ToBoolean(user_cfg.DoNotShowStatistic);
             cbDoNotGetRevard.IsChecked = Convert.ToBoolean(user_cfg.DoNotGetRevard);
             cbDoNotLift.IsChecked = Convert.ToBoolean(user_cfg.DoNotLift);
+            cbAutoCollection.IsChecked = Convert.ToBoolean(user_cfg.AutoCollection);
             cbInvite.IsChecked = Convert.ToBoolean(user_cfg.Invite);
             cbInviteFrom.IsChecked = Convert.ToBoolean(user_cfg.InviteFrom);
             tbInviteFrom.Text = user_cfg.InviteFromMeaning;
@@ -837,6 +861,7 @@ namespace Nebo.Mobi.Bot
             user_cfg.Fire9 = cbFire9.IsChecked.Value.ToString().ToLower();
             user_cfg.DoNotGetRevard = cbDoNotGetRevard.IsChecked.Value.ToString().ToLower();
             user_cfg.DoNotLift = cbDoNotLift.IsChecked.Value.ToString().ToLower();
+            user_cfg.AutoCollection = cbAutoCollection.IsChecked.Value.ToString().ToLower();
             user_cfg.DoNotShowStatistic = cbDoNotShowStatistic.IsChecked.Value.ToString().ToLower();
             user_cfg.Invite = cbInvite.IsChecked.Value.ToString().ToLower();
             user_cfg.InviteFrom = cbInviteFrom.IsChecked.Value.ToString().ToLower();

@@ -143,6 +143,15 @@ namespace Nebo.Mobi.Bot.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Пытаться взять задание городской Коллекции..
+        /// </summary>
+        internal static string cbAutoCollection {
+            get {
+                return ResourceManager.GetString("cbAutoCollection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Запускать программу вместе с Windows и по возможности запускать бота для всех профилей..
         /// </summary>
         internal static string cbAutorun {

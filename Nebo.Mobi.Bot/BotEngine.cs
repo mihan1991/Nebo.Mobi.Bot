@@ -366,6 +366,12 @@ namespace Nebo.Mobi.Bot
                         GetInfo();
                 }
 
+                //пробуем взять задание городской Коллекции
+                if (Convert.ToBoolean(user_cfg.AutoCollection))
+                {
+                    GetCollectionWork();
+                }
+
                 //шмонаем гостиницу
                 FindWorkers();
                 if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
@@ -1495,6 +1501,39 @@ namespace Nebo.Mobi.Bot
             ACTION_STATUS = "Анализ ситуации";
             Thread.Sleep(rnd.Next(100, 300));
         }
+
+        //попытка получить задание городской Коллекции
+        private void GetCollectionWork()
+        {
+            //идем на главную
+            GetHomePage();
+
+            string a = Parse(HTML, "city/coll");
+            if (a != "" && !a.Contains("white"))
+            {
+                //если коллекция есть - входим
+                a = a.Substring(26);
+                a = a.Remove(a.IndexOf('\"'));
+                ClickLink(a, "");
+                Thread.Sleep(rnd.Next(100, 300));
+
+
+                //пробуем получить задание
+                a = Parse(HTML, "Получить задание");
+                if (a != "")
+                {
+                    a = a.Substring(28);
+                    a = a.Remove(a.IndexOf('\"'));
+                    ClickLink(a, "");
+                    Thread.Sleep(rnd.Next(100, 300));
+
+                    a = Parse(HTML, "Ваше задание:");
+                    a = a.Substring(46);
+                    a = a.Remove(a.IndexOf('<'));
+                    COMMUTATION_STR.Add(string.Format("{0}  -  Получено задание: {1}.", GetTime(), a));
+                }
+            }
+         }
 
         //пробуем назначить на должность
         private void TryToAppoint()

@@ -10276,4 +10276,7 @@
         TkSuQmCC
 </value>
   </data>
+  <data name="cbAutoCollection" xml:space="preserve">
+    <value>Пытаться взять задание городской Коллекции.</value>
+  </data>
 </root>
