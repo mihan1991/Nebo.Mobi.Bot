@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows.Data;
@@ -46,7 +47,7 @@ namespace Nebo.Mobi.Bot
         public int Opened_Floor_Count;
         public int Invited_Count;
         public int Action_Count;
-        public string[] Stat;
+        public string CurrentWork;
 
         private static string SERVER = "https://vnebo.mobi/";     //адрес сервера
         //private static string SERVER = "http://pumpit.mmska.ru/";
@@ -111,9 +112,10 @@ namespace Nebo.Mobi.Bot
         //создание страницы с отчетом
         public void CreateHTMLPage(string res)
         {
-            Stat = res.Split('\n');
+            List<string> Stat = res.Split('\n').ToList();
+            //Stat = res.Split('\n');
 
-            for (int i = 0; i < Stat.Length; i++)
+            for (int i = 0; i < Stat.Count; i++)
             {
                 if (Stat[i].Contains("<div class=\"prg\""))
                 {
@@ -173,6 +175,12 @@ namespace Nebo.Mobi.Bot
                 if (Stat[i].Contains("UserFloors"))
                 {
                     Stat[i] = "<UserFloors>" + User_Floors + "</UserFloors>\r";
+                }
+
+                if (Stat[i].Contains("Exclusive by"))
+                {
+                    Stat.Insert(i-3, CurrentWork);
+                    i += 2;
                 }
 
             }
@@ -288,7 +296,16 @@ namespace Nebo.Mobi.Bot
             User_Floors = ab;
             ab = "";
 
-            //Thread.Sleep(rnd.Next(500, 1000));
+            //получаем строки с текущим заданием
+            CurrentWork = "";
+            for (i = 0; i < str.Length; i++)
+            {
+                if (str[i].Contains("city/quests") && !str[i].Contains("tb_quests.png"))
+                {
+                    for (int j = 0; j < 13; j++)
+                        CurrentWork += str[i - 2 + j];
+                }
+            }
 
             //лезем в Мой город 
             for (i = 0; i < str.Length; i++)
