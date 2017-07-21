@@ -300,10 +300,52 @@ namespace Nebo.Mobi.Bot
             CurrentWork = "";
             for (i = 0; i < str.Length; i++)
             {
-                if (str[i].Contains("city/quests") && !str[i].Contains("tb_quests.png"))
+                if ((str[i].Contains("city/quests") && !str[i].Contains("tb_quests.png")) || str[i].Contains("city/coll"))
                 {
                     for (int j = 0; j < 13; j++)
+                    {
+                        //убираем ссылки в случае невзятого задания
+                        if (str[i - 2 + j].Contains("tdn cntr"))
+                            str[i - 2 + j] = "<span>";
+
+                        //или взятого
+                        if (str[i - 2 + j].Contains("white bl tdn"))
+                        {
+                            str[i - 2 + j] = str[i - 2 + j].Substring(str[i - 2 + j].IndexOf('>') + 1);
+                            str[i - 2 + j] = str[i - 2 + j].Remove(str[i - 2 + j].Length - 4);
+                        }
+
+                        //убираем остаток ссылки
+                        if (str[i - 2 + j].Contains("</a>"))
+                            str[i - 2 + j] = "</span>";
+
+                        //фиксим ссылки на картинки
+                        if (str[i - 2 + j].Contains("/images/coll/"))
+                            str[i - 2 + j] = str[i - 2 + j].Replace("/images/coll/", "http://nebo.mobi/images/coll/");
+
                         CurrentWork += str[i - 2 + j];
+                    }
+                    break;
+                }
+            }
+
+            //получаем строки лобби
+            for (i = 0; i < str.Length; i++)
+            {
+                if (str[i].Contains("lobby") && !str[i].Contains("flhdr") && !str[i].Contains("vestibul"))
+                {
+                    for (int j = 0; j < 17; j++)
+                    {
+                        //убираем ссылку
+                        if (str[i - 5 + j].Contains("lobby") && str[i - 5 + j].Contains("white bl tdn"))
+                        {
+                            str[i - 5 + j] = str[i - 5 + j].Substring(str[i - 5 + j].IndexOf('>') + 1);
+                            str[i - 5 + j] = str[i - 5 + j].Remove(str[i - 5 + j].Length - 4);
+                        }
+                        if (!str[i - 5 + j].Contains("images"))
+                            CurrentWork += str[i - 5 + j];
+                    }
+                    break;
                 }
             }
 
