@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Nebo.Mobi.Bot.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Nebo.Mobi.Bot" Height="700" Width="750" MinHeight="700" MinWidth="750" Initialized="Window_Initialized" Closing="Window_Closing"
+        Title="Nebo.Mobi.Bot" Height="700" Width="1217" MinHeight="700" MinWidth="750" Initialized="Window_Initialized" Closing="Window_Closing"
         xmlns:wf="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms">
         <!--AllowsTransparency="True" WindowStyle="None" Background="Transparent" 
         ResizeMode="CanResizeWithGrip" UseLayoutRounding="True"-->

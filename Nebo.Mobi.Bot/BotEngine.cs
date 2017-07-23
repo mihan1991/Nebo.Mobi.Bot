@@ -332,7 +332,7 @@ namespace Nebo.Mobi.Bot
             //получаем строки лобби
             for (i = 0; i < str.Length; i++)
             {
-                if (str[i].Contains("lobby") && !str[i].Contains("flhdr") && !str[i].Contains("vestibul"))
+                if (str[i].Contains("lobby") && !str[i].Contains("flhdr") && !str[i].Contains("vestibul") && !str[i].Contains("tb_quests_vip.png"))
                 {
                     for (int j = 0; j < 17; j++)
                     {
@@ -342,8 +342,87 @@ namespace Nebo.Mobi.Bot
                             str[i - 5 + j] = str[i - 5 + j].Substring(str[i - 5 + j].IndexOf('>') + 1);
                             str[i - 5 + j] = str[i - 5 + j].Remove(str[i - 5 + j].Length - 4);
                         }
+
+
+                        /// 
+                        /// Здесь можно будет включить функцию экономии трафика
+                        /// 
+
+                        /*
                         if (!str[i - 5 + j].Contains("images"))
                             CurrentWork += str[i - 5 + j];
+                        */
+
+                        //фиксим ссылки на картинки
+                        if (str[i - 5 + j].Contains("/images/icons/"))
+                            str[i - 5 + j] = str[i - 5 + j].Replace("/images/icons/", "http://nebo.mobi/images/icons/");
+
+                        CurrentWork += str[i - 5 + j];
+                    }
+                    break;
+                }
+            }
+
+
+            //получаем строки сундуков по выходным
+            for (i = 0; i < str.Length; i++)
+            {
+                if (str[i].Contains("city/box/quests") && str[i].Contains("amount bl tdn"))
+                {
+                    for (int j = 0; j < 19; j++)
+                    {
+                        //убираем ссылку
+                        if (str[i - 6 + j].Contains("city/box/quests") && str[i - 6 + j].Contains("amount bl tdn"))
+                        {
+                            str[i - 6 + j] = str[i - 6 + j].Substring(str[i - 6 + j].IndexOf('>') + 1);
+                            str[i - 6 + j] = str[i - 6 + j].Remove(str[i - 6 + j].Length - 4);
+                        }
+
+
+                        /// 
+                        /// Здесь можно будет включить функцию экономии трафика
+                        /// 
+
+                        /*
+                        if (!str[i - 5 + j].Contains("images"))
+                            CurrentWork += str[i - 5 + j];
+                        */
+
+                        //фиксим ссылки на картинки
+                        if (str[i - 6 + j].Contains("/images/icons/"))
+                            str[i - 6 + j] = str[i - 6 + j].Replace("/images/icons/", "http://nebo.mobi/images/icons/");
+
+                        CurrentWork += str[i - 6 + j];
+                    }
+                    break;
+                }
+
+                else if (str[i].Contains("city/box/quests") && str[i].Contains("white bl tdn"))
+                {
+                    for (int j = 0; j < 12; j++)
+                    {
+                        //убираем ссылку
+                        if (str[i - 2 + j].Contains("city/box/quests") && str[i - 2 + j].Contains("white bl tdn"))
+                        {
+                            str[i - 2 + j] = str[i - 2 + j].Substring(str[i - 2 + j].IndexOf('>') + 1);
+                            str[i - 2 + j] = str[i - 2 + j].Remove(str[i - 2 + j].Length - 4);
+                        }
+
+
+                        /// 
+                        /// Здесь можно будет включить функцию экономии трафика
+                        /// 
+
+                        /*
+                        if (!str[i - 5 + j].Contains("images"))
+                            CurrentWork += str[i - 5 + j];
+                        */
+
+                        //фиксим ссылки на картинки
+                        //if (str[i - 2 + j].Contains("/images/icons/"))
+                        //    str[i - 2 + j] = str[i - 2 + j].Replace("/images/icons/", "http://nebo.mobi/images/icons/");
+
+                        CurrentWork += str[i - 2 + j];
                     }
                     break;
                 }
