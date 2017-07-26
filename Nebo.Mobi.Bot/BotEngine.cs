@@ -300,7 +300,7 @@ namespace Nebo.Mobi.Bot
             CurrentWork = "";
             for (i = 0; i < str.Length; i++)
             {
-                if ((str[i].Contains("city/quests") && !str[i].Contains("tb_quests.png")) || str[i].Contains("city/coll"))
+                if ((str[i].Contains("city/quests") && !str[i].Contains("tb_quests.png")) || (str[i].Contains("city/coll") && !str[i].Contains("tb_quests.png")))
                 {
                     for (int j = 0; j < 13; j++)
                     {
@@ -508,54 +508,46 @@ namespace Nebo.Mobi.Bot
                 if (Convert.ToBoolean(user_cfg.AutoCollection))
                 {
                     GetCollectionWork();
+                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
+                        GetInfo();
                 }
 
                 //шмонаем гостиницу
                 FindWorkers();
                 if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
-                {
                     GetRevard();
-                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                        GetInfo();
-                }
+                if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
+                    GetInfo();
 
                 //собираем выручку
                 CollectMoney();
                 if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
-                {
                     GetRevard();
-                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                        GetInfo();
-                }
+                if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
+                    GetInfo();
 
+                //выкладываем товары
                 if (!Convert.ToBoolean(user_cfg.DoNotPut))
                 {
-                    //выкладываем товары
                     PutMerch();
                     if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
-                    {
                         GetRevard();
-                        if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                            GetInfo();
-                    }
+                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
+                        GetInfo();
                 }
 
                 //закупаем товары
                 Buy();
                 if (!Convert.ToBoolean(user_cfg.DoNotGetRevard))
-                {
                     GetRevard();
-                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                        GetInfo();
-                }
+                if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
+                    GetInfo();
 
                 //катаем лифт (если не запрещено)
                 if (!Convert.ToBoolean(user_cfg.DoNotLift))
-                {
                     GoneLift();
-                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
-                        GetInfo();
-                }
+                if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
+                    GetInfo();
 
                 //зовем народ
                 if (Convert.ToBoolean(user_cfg.Invite))
@@ -826,6 +818,9 @@ namespace Nebo.Mobi.Bot
         private void GetRevard()
         {
             GetHomePage();
+
+            GetVIPRevard();
+
             //получаем ссылку на квесты и кликаем если есть награда
             string ab = TryRevard();
             if (ab != "")
@@ -910,6 +905,52 @@ namespace Nebo.Mobi.Bot
                 ab = ab.Remove(ab.IndexOf('\"'));
             }
             return ab;
+        }
+
+        //получение награды VIP-посетителя
+        private void GetVIPRevard()
+        {
+            string ab = "";
+            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            bucks_count = 0;
+
+            //ищем награду VIPа
+            for(int i=0; i<str.Length; i++)
+                if (str[i].Contains("готово") && str[i - 7].Contains("lobby"))
+                {
+                    ab = str[i - 7].Substring(30);
+                    ab = ab.Remove(ab.IndexOf('\"'));
+
+                    ClickLink(ab, "");
+                    Thread.Sleep(rnd.Next(100, 300));
+
+                    str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    for(int j=0; j<str.Length; j++)
+                        if (str[j].Contains("Получить награду"))
+                        {
+                            ab = str[j].Substring(33);
+                            ab = ab.Remove(ab.IndexOf('\"'));
+
+                            ClickLink(ab, "");
+                            Thread.Sleep(rnd.Next(100, 300));
+
+                            //ВРЕМЕННО!!!!
+                            COMMUTATION_STR.Add(string.Format("{0}  -  Получена награда VIPа (в разработке).", GetTime()));
+
+                            //фиксируем баксы
+                            ab = Parse(HTML, "Баксы:");
+                            if (ab != "")
+                            {
+                                ab = ab.Substring(108);
+                                ab = ab.Remove(ab.IndexOf('<'));
+
+                                bucks_count = Convert.ToInt32(ab);
+                                Bucks_Count += bucks_count;
+                                COMMUTATION_STR.Add(string.Format("{0}  -  Получено баксов за VIPа: {1}.", GetTime(), bucks_count));
+                            }
+                        }
+                }
+            GetHomePage();
         }
 
         //основной метод отправки лифта
