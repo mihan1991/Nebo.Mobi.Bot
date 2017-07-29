@@ -10279,4 +10279,7 @@
   <data name="cbAutoCollection" xml:space="preserve">
     <value>Пытаться взять задание городской Коллекции.</value>
   </data>
+  <data name="cbAutoBox" xml:space="preserve">
+    <value>По возможности брать задания Городских судуков</value>
+  </data>
 </root>

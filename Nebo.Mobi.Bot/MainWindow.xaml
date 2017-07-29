@@ -59,7 +59,8 @@
                                         <TextBox Name="tbFireLess" Height="25" Width="25" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="225,60,0,0" VerticalContentAlignment="Center"/>
                                         <CheckBox Name="cbFire9" Content="Выселять жильцов 9 уровня со знаком (-)" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,85,0,0" Width="250"/>
                                         <CheckBox Name="cbDoNotShowStatistic" Content="НЕ отображать статистику" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,105,0,0" Width="250"/>
-                                        <CheckBox Name="cbAutoCollection" Content="Получать задания Коллекции" Height="16" HorizontalAlignment="Left" Margin="5,130,0,0" VerticalAlignment="Top" />
+                                        <CheckBox Name="cbAutoCollection" Content="Получать задания Городских коллекций" Height="16" HorizontalAlignment="Left" Margin="5,130,0,0" VerticalAlignment="Top" />
+                                        <CheckBox Name="cbAutoBox" Content="Получать задания Городских сундуков" Height="16" HorizontalAlignment="Left" Margin="5,150,0,0" VerticalAlignment="Top" />
                                         <CheckBox Name="cbInvite" Content="Приглашать в город" Height="16" HorizontalAlignment="Left" Margin="280,5,0,0" VerticalAlignment="Top" />
                                         <GroupBox Name="gbInvite" HorizontalAlignment="Left" Margin="280,22,0,0" Width="227" Height="99" VerticalAlignment="Top">
                                             <Grid>

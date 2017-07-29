@@ -31,6 +31,7 @@ namespace Nebo.Mobi.Bot
             public string DoNotGetRevard;
             public string DoNotLift;
             public string AutoCollection;
+            public string AutoBox;
             public string Invite;
             public string InviteFrom;
             public string InviteFromMeaning;
@@ -54,6 +55,7 @@ namespace Nebo.Mobi.Bot
                 DoNotShowStatistic = "false";
                 DoNotLift = "false";
                 AutoCollection = "true";
+                AutoBox = "true";
                 DoNotSaveThePass = "false";
                 DoNotGetRevard = "false";
                 Invite = "true";
@@ -249,6 +251,16 @@ namespace Nebo.Mobi.Bot
 
                     try
                     {
+                        node = doc.SelectSingleNode(string.Format("config/u{0}/AutoBox", i));
+                        u.AutoBox = node.InnerText;
+                    }
+                    catch
+                    {
+                        EverythingAlright = false;
+                    }
+
+                    try
+                    {
                         node = doc.SelectSingleNode(string.Format("config/u{0}/Invite", i));
                         u.Invite = node.InnerText;
                     }
@@ -427,6 +439,7 @@ namespace Nebo.Mobi.Bot
                 doc.WriteElementString("DoNotGetRevard", users[i].DoNotGetRevard);
                 doc.WriteElementString("DoNotLift", users[i].DoNotLift);
                 doc.WriteElementString("AutoCollection", users[i].AutoCollection);
+                doc.WriteElementString("AutoBox", users[i].AutoBox);
                 doc.WriteElementString("Invite", users[i].Invite);
                 doc.WriteElementString("InviteFrom", users[i].InviteFrom);
                 doc.WriteElementString("InviteFromMeaning", users[i].InviteFromMeaning);
@@ -490,6 +503,7 @@ namespace Nebo.Mobi.Bot
                 doc.WriteElementString("DoNotGetRevard", users[i].DoNotGetRevard);
                 doc.WriteElementString("DoNotLift", users[i].DoNotLift);
                 doc.WriteElementString("AutoCollection", users[i].AutoCollection);
+                doc.WriteElementString("AutoBox", users[i].AutoBox);
                 doc.WriteElementString("Invite", users[i].Invite);
                 doc.WriteElementString("InviteFrom", users[i].InviteFrom);
                 doc.WriteElementString("InviteFromMeaning", users[i].InviteFromMeaning);

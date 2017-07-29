@@ -143,6 +143,15 @@ namespace Nebo.Mobi.Bot.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to По возможности брать задания Городских судуков.
+        /// </summary>
+        internal static string cbAutoBox {
+            get {
+                return ResourceManager.GetString("cbAutoBox", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Пытаться взять задание городской Коллекции..
         /// </summary>
         internal static string cbAutoCollection {
@@ -489,7 +498,7 @@ namespace Nebo.Mobi.Bot.Properties {
         ///    &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;http://nebo.mobi/images/style.css?v=83&quot;/&gt;
         ///    &lt;title&gt;Старт&lt;/title&gt;
         ///  &lt;/head&gt;
-        ///   [rest of string was truncated]&quot;;.
+        ///  &lt;body clas [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string start {
             get {
@@ -508,7 +517,7 @@ namespace Nebo.Mobi.Bot.Properties {
         ///    &lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;http://nebo.mobi/images/style.css?v=83&quot;/&gt;
         ///    &lt;title&gt;Старт&lt;/title&gt;
         ///  &lt;/head&gt;
-        ///   [rest of string was truncated]&quot;;.
+        ///  &lt;body clas [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string start_off {
             get {

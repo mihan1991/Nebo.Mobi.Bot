@@ -60,6 +60,7 @@ namespace Nebo.Mobi.Bot
         private CheckBox cbDoNotGetRevard;
         private CheckBox cbDoNotLift;
         private CheckBox cbAutoCollection;
+        private CheckBox cbAutoBox;
         private CheckBox cbFire;
         private TextBox tbFireLess;
         private CheckBox cbFire9;
@@ -204,6 +205,7 @@ namespace Nebo.Mobi.Bot
             cbDoNotGetRevard = new CheckBox();
             cbDoNotLift = new CheckBox();
             cbAutoCollection = new CheckBox();
+            cbAutoBox = new CheckBox();
             cbFire = new CheckBox();
             tbFireLess = new TextBox();
             cbFire9 = new CheckBox();
@@ -497,7 +499,7 @@ namespace Nebo.Mobi.Bot
 
 
             cbAutoCollection.Name = "cbAutoCollection";
-            cbAutoCollection.Content = "Получать задания городских Коллекций";
+            cbAutoCollection.Content = "Получать задания Городских коллекций";
             cbAutoCollection.Height = 20;
             cbAutoCollection.HorizontalAlignment = HorizontalAlignment.Left;
             cbAutoCollection.VerticalAlignment = VerticalAlignment.Top;
@@ -505,6 +507,15 @@ namespace Nebo.Mobi.Bot
             cbAutoCollection.MouseEnter += ShowToolTip;
             cbAutoCollection.Click += cbClick;
 
+
+            cbAutoBox.Name = "cbAutoBox";
+            cbAutoBox.Content = "Получать задания Городских сундуков";
+            cbAutoBox.Height = 20;
+            cbAutoBox.HorizontalAlignment = HorizontalAlignment.Left;
+            cbAutoBox.VerticalAlignment = VerticalAlignment.Top;
+            cbAutoBox.Margin = new Thickness(5, 155, 0, 0);
+            cbAutoBox.MouseEnter += ShowToolTip;
+            cbAutoBox.Click += cbClick;
 
             cbInvite.Name = "cbInvite";
             cbInvite.Content = "Приглашать в город";
@@ -603,6 +614,7 @@ namespace Nebo.Mobi.Bot
             gScroll.Children.Add(cbFire9);
             gScroll.Children.Add(cbDoNotShowStatistic);
             gScroll.Children.Add(cbAutoCollection);
+            gScroll.Children.Add(cbAutoBox);
             gScroll.Children.Add(cbInvite);
             gScroll.Children.Add(gbInvite);
 
@@ -726,6 +738,7 @@ namespace Nebo.Mobi.Bot
             cbDoNotGetRevard.IsChecked = Convert.ToBoolean(user_cfg.DoNotGetRevard);
             cbDoNotLift.IsChecked = Convert.ToBoolean(user_cfg.DoNotLift);
             cbAutoCollection.IsChecked = Convert.ToBoolean(user_cfg.AutoCollection);
+            cbAutoBox.IsChecked = Convert.ToBoolean(user_cfg.AutoBox);
             cbInvite.IsChecked = Convert.ToBoolean(user_cfg.Invite);
             cbInviteFrom.IsChecked = Convert.ToBoolean(user_cfg.InviteFrom);
             tbInviteFrom.Text = user_cfg.InviteFromMeaning;
@@ -862,6 +875,7 @@ namespace Nebo.Mobi.Bot
             user_cfg.DoNotGetRevard = cbDoNotGetRevard.IsChecked.Value.ToString().ToLower();
             user_cfg.DoNotLift = cbDoNotLift.IsChecked.Value.ToString().ToLower();
             user_cfg.AutoCollection = cbAutoCollection.IsChecked.Value.ToString().ToLower();
+            user_cfg.AutoBox = cbAutoBox.IsChecked.Value.ToString().ToLower();
             user_cfg.DoNotShowStatistic = cbDoNotShowStatistic.IsChecked.Value.ToString().ToLower();
             user_cfg.Invite = cbInvite.IsChecked.Value.ToString().ToLower();
             user_cfg.InviteFrom = cbInviteFrom.IsChecked.Value.ToString().ToLower();

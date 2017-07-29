@@ -504,10 +504,18 @@ namespace Nebo.Mobi.Bot
                         GetInfo();
                 }
 
-                //пробуем взять задание городской Коллекции
+                //пробуем взять задание Городских коллекций
                 if (Convert.ToBoolean(user_cfg.AutoCollection))
                 {
                     GetCollectionWork();
+                    if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
+                        GetInfo();
+                }
+
+                //пробуем взять задание Городских сундуков
+                if (Convert.ToBoolean(user_cfg.AutoBox))
+                {
+                    GetBox();
                     if (!Convert.ToBoolean(user_cfg.DoNotShowStatistic))
                         GetInfo();
                 }
@@ -821,6 +829,8 @@ namespace Nebo.Mobi.Bot
 
             GetVIPRevard();
 
+            GetHolidayRevard();
+
             //получаем ссылку на квесты и кликаем если есть награда
             string ab = TryRevard();
             if (ab != "")
@@ -950,6 +960,39 @@ namespace Nebo.Mobi.Bot
                             }
                         }
                 }
+            GetHomePage();
+        }
+
+        //сбор награды за задания в выходные
+        private void GetHolidayRevard()
+        {
+            string ab = "";
+            string[] str = HTML.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            bucks_count = 0;
+
+            //ищем награду
+            for(int i=0; i<str.Length; i++)
+                if (str[i].Contains("готово") && str[i - 7].Contains("city/box/quests"))
+                {
+                    ab = str[i - 7].Substring(30);
+                    ab = ab.Remove(ab.IndexOf('\"'));
+
+                    ClickLink(ab, "");
+                    Thread.Sleep(rnd.Next(100, 300));
+
+                    ab = Parse(HTML, "Завершить!");
+                    if (ab != "")
+                    {
+                        ab = ab.Substring(33);
+                        ab = ab.Remove(ab.IndexOf('\"'));
+
+                        ClickLink(ab, "");
+                        Thread.Sleep(rnd.Next(100, 300));
+
+                        COMMUTATION_STR.Add(string.Format("{0}  -  Получено награда за Сундуки города.", GetTime()));
+                    }
+                }
+
             GetHomePage();
         }
 
@@ -1681,7 +1724,7 @@ namespace Nebo.Mobi.Bot
             Thread.Sleep(rnd.Next(100, 300));
         }
 
-        //попытка получить задание городской Коллекции
+        //попытка получить задание Городских коллекций
         private void GetCollectionWork()
         {
             //идем на главную
@@ -1713,6 +1756,39 @@ namespace Nebo.Mobi.Bot
                 }
             }
          }
+
+        //попытка получить задание Городских сундуков
+        private void GetBox()
+        {
+            //идем на главную
+            GetHomePage();
+
+            string a = Parse(HTML, "city/box/quests");
+            if (a != "" && !a.Contains("white"))
+            {
+                //если коллекция есть - входим
+                a = a.Substring(31);
+                a = a.Remove(a.IndexOf('\"'));
+                ClickLink(a, "");
+                Thread.Sleep(rnd.Next(100, 300));
+
+
+                //пробуем получить задание
+                a = Parse(HTML, "Получить задание");
+                if (a != "")
+                {
+                    a = a.Substring(46);
+                    a = a.Remove(a.IndexOf('\"'));
+                    ClickLink(a, "");
+                    Thread.Sleep(rnd.Next(100, 300));
+
+                    a = Parse(HTML, "Ваше задание:");
+                    a = a.Substring(32);
+                    a = a.Remove(a.IndexOf('<'));
+                    COMMUTATION_STR.Add(string.Format("{0}  -  Получено задание: {1}.", GetTime(), a));
+                }
+            }
+        }
 
         //пробуем назначить на должность
         private void TryToAppoint()
