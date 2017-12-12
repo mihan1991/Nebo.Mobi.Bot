@@ -945,7 +945,7 @@ namespace Nebo.Mobi.Bot
                             Thread.Sleep(rnd.Next(100, 300));
 
                             //ВРЕМЕННО!!!!
-                            COMMUTATION_STR.Add(string.Format("{0}  -  Получена награда VIPа (в разработке).", GetTime()));
+                            COMMUTATION_STR.Add(string.Format("{0}  -  Получена награда VIPа.", GetTime()));
 
                             //фиксируем баксы
                             ab = Parse(HTML, "Баксы:");
